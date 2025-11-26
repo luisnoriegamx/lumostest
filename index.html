@@ -10,7 +10,17 @@
         html, body { scroll-behavior: smooth; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f0f2f5; color: #333; display: flex; justify-content: center; align-items: flex-start; padding: 15px; margin: 0; box-sizing: border-box; }
         .container { width: 100%; max-width: 900px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; }
-        h1 { color: var(--primary-color); font-size: 2em; }
+        
+        /* --- ESTILOS DEL LOGO --- */
+        .app-logo {
+            width: 70px;
+            height: auto;
+            display: block;
+            margin: 0 auto 10px auto; /* Centrado y margen inferior */
+            color: var(--primary-color); /* Usa el color principal */
+        }
+        
+        h1 { color: var(--primary-color); font-size: 2em; margin-top: 0; }
         p { font-size: 1.1em; }
         .canvas-container { position: relative; display: inline-block; line-height: 0; max-width: 100%; border: 2px solid #ddd; border-radius: 8px; background-color: #fff; overflow: hidden; margin-top: 15px; }
         canvas { background-color: #fff; cursor: crosshair; touch-action: none; max-width: 100%; height: auto; display: block; border: none; }
@@ -41,11 +51,29 @@
         #progress-text { color: var(--primary-color); font-weight: 500; font-size: 1.1em; }
         .status-indicator { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 15px; padding: 8px; background-color: #f8f9fa; border-radius: 20px; max-width: 350px; margin-left: auto; margin-right: auto; }
         #status-dot { width: 15px; height: 15px; border-radius: 50%; background-color: #adb5bd; transition: background-color 0.5s; }
-        @media (max-width: 600px) { body { padding: 5px; } .container { padding: 10px; } h1 { font-size: 1.5em; } p { font-size: 0.9em; } .controls { flex-direction: column; gap: 12px; } .controls button { width: 80%; max-width: 300px; } #analyzeBtn { padding: 12px; font-size: 16px; } #fullscreenBtn, #toggleCanvasSizeBtn { font-size: 16px; padding: 5px 8px; } #toggleCanvasSizeBtn { right: 50px; } .modal-header h2 { font-size: 1.2em;} }
+        @media (max-width: 600px) { 
+            body { padding: 5px; } 
+            .container { padding: 10px; } 
+            h1 { font-size: 1.5em; } 
+            p { font-size: 0.9em; } 
+            .controls { flex-direction: column; gap: 12px; } 
+            .controls button { width: 80%; max-width: 300px; } 
+            #analyzeBtn { padding: 12px; font-size: 16px; } 
+            #fullscreenBtn, #toggleCanvasSizeBtn { font-size: 16px; padding: 5px 8px; } 
+            #toggleCanvasSizeBtn { right: 50px; } 
+            .modal-header h2 { font-size: 1.2em;}
+            .app-logo { width: 55px; } /* Logo un poco más pequeño en móvil */
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <svg class="app-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.55 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/>
+            <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.55 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/>
+            <circle cx="12" cy="12" r="3"/>
+        </svg>
+        
         <h1>PsychoArt Analytics</h1>
         <p>Instrucción: Pida al candidato que realice un dibujo libre en el siguiente lienzo.</p>
         <div class="controls">
@@ -57,7 +85,7 @@
         <div class="canvas-container">
             <canvas id="drawingCanvas" width="850" height="600"></canvas>
             <button id="fullscreenBtn" title="Pantalla Completa">🌐</button>
-            <button id="toggleCanvasSizeBtn" title="Expandir/Contraer Lienzo"↔️</button>
+            <button id="toggleCanvasSizeBtn" title="Expandir/Contraer Lienzo">↔️</button>
         </div>
         
         <div class="status-indicator"><div id="status-dot"></div><span id="status-text">Iniciando sistema...</span></div>
@@ -215,7 +243,7 @@
                 updateProgress(30, 'Enviando a Servidor Seguro...');
                 
                 try { 
-                    // AQUÍ ESTÁ EL CAMBIO IMPORTANTE:
+                    // Llamada al backend de Vercel
                     const analysisResult = await callBackendAPI(prompt, base64Image); 
                     
                     updateProgress(100, 'Informe Recibido');
@@ -267,7 +295,6 @@
                 
                 if (!response.ok) {
                     const errorText = await response.text();
-                    // Intentar parsear el error si es JSON
                     try {
                         const errorJson = JSON.parse(errorText);
                         throw new Error(errorJson.error || "Error en el servidor");
