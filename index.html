@@ -9,11 +9,12 @@
         :root { --primary-color: #1d3557; --secondary-color: #6c757d; --danger-color: #e63946; }
         html, body { scroll-behavior: smooth; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f0f2f5; color: #333; display: flex; justify-content: center; align-items: flex-start; padding: 15px; margin: 0; box-sizing: border-box; }
-        .container { width: 100%; max-width: 850px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; }
+        .container { width: 100%; max-width: 900px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; }
         h1 { color: var(--primary-color); font-size: 2em; }
         p { font-size: 1.1em; }
         .canvas-container { position: relative; display: inline-block; line-height: 0; max-width: 100%; border: 2px solid #ddd; border-radius: 8px; background-color: #fff; overflow: hidden; margin-top: 15px; }
-        canvas { background-color: #fff; cursor: crosshair; touch-action: none; max-width: 100%; height: auto; display: block; aspect-ratio: 16 / 9; border: none; }
+        /* Lienzo más grande y responsivo */
+        canvas { background-color: #fff; cursor: crosshair; touch-action: none; max-width: 100%; height: auto; display: block; border: none; }
         .controls { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; margin-bottom: 15px; gap: 15px; }
         .controls button, .controls input[type="range"], .controls label { font-size: 14px; }
         .controls button { padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; transition: background-color 0.3s; font-weight: bold; color: white; }
@@ -48,8 +49,12 @@
     <div class="container">
         <h1>PsychoArt Analytics</h1>
         <p>Instrucción: Pida al candidato que realice un dibujo libre en el siguiente lienzo.</p>
-        <div class="controls"><label for="brushSize">Tamaño Pincel:</label><input type="range" id="brushSize" min="1" max="30" value="5"><button id="clearBtn">Borrar Lienzo</button></div>
-        <div class="canvas-container"><canvas id="drawingCanvas" width="800" height="450"></canvas><button id="fullscreenBtn" title="Pantalla Completa">🌐</button><button id="toggleCanvasSizeBtn" title="Expandir/Contraer Lienzo">↔️</button></div>
+        <div class="controls">
+            <label for="brushSize">Tamaño Pincel:</label>
+            <input type="range" id="brushSize" min="1" max="30" value="3">
+            <button id="clearBtn">Borrar Lienzo</button>
+        </div>
+        <div class="canvas-container"><canvas id="drawingCanvas" width="850" height="600"></canvas><button id="fullscreenBtn" title="Pantalla Completa">🌐</button><button id="toggleCanvasSizeBtn" title="Expandir/Contraer Lienzo">↔️</button></div>
         <div class="status-indicator"><div id="status-dot"></div><span id="status-text">Verificando conexión con IA...</span></div>
         <button id="analyzeBtn">Generar Informe Psicológico</button>
     </div>
@@ -71,40 +76,146 @@
     
     <script>
     try {
-        const GEMINI_API_KEY = "AIzaSyBXm2UPWGu_6pnmpiDvbEQQQBHA9sxOoXE";
+        const GEMINI_API_KEY = "AIzaSyCY1-5gyRNfDMndS3cxTRfdMjvoRtYsKeQ";
         const OPENAI_API_KEY = "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";
 
         document.addEventListener('DOMContentLoaded', () => {
-            const canvas = document.getElementById('drawingCanvas'); const ctx = canvas.getContext('2d'); const analyzeBtn = document.getElementById('analyzeBtn'); const clearBtn = document.getElementById('clearBtn'); const brushSizeSlider = document.getElementById('brushSize'); const fullscreenBtn = document.getElementById('fullscreenBtn'); const toggleCanvasSizeBtn = document.getElementById('toggleCanvasSizeBtn'); const statusDot = document.getElementById('status-dot'); const statusText = document.getElementById('status-text');
+            const canvas = document.getElementById('drawingCanvas'); const ctx = canvas.getContext('2d', { willReadFrequently: true }); 
+            const analyzeBtn = document.getElementById('analyzeBtn'); const clearBtn = document.getElementById('clearBtn'); const brushSizeSlider = document.getElementById('brushSize'); const fullscreenBtn = document.getElementById('fullscreenBtn'); const toggleCanvasSizeBtn = document.getElementById('toggleCanvasSizeBtn'); const statusDot = document.getElementById('status-dot'); const statusText = document.getElementById('status-text');
             const progressModal = document.getElementById('progressModal'); const progressBar = document.getElementById('progress-bar'); const progressText = document.getElementById('progress-text');
             const reportModal = document.getElementById('reportModal'); const modalBody = document.getElementById('modalBody'); const closeModalBtn = document.getElementById('closeModalBtn'); const savePdfBtn = document.getElementById('savePdfBtn');
-            let isDrawing = false, lastX = 0, lastY = 0; let isCanvasExpanded = false; const originalCanvasSize = { width: 800, height: 450 }; let drawingImage = null;
+            
+            let isDrawing = false, lastX = 0, lastY = 0; 
+            let isCanvasExpanded = false; 
+            const originalCanvasSize = { width: 850, height: 600 }; 
+            let drawingImage = null;
+            let resizeTimeout;
+
+            // Configuración inicial del contexto
+            const initContext = () => {
+                ctx.lineJoin = 'round';
+                ctx.lineCap = 'round';
+                ctx.lineWidth = brushSizeSlider.value;
+                ctx.strokeStyle = '#000';
+            };
+
             const getPos = e => { const rect = canvas.getBoundingClientRect(); const clientX = e.clientX || e.touches[0].clientX; const clientY = e.clientY || e.touches[0].clientY; return [(clientX - rect.left) * (canvas.width / rect.width), (clientY - rect.top) * (canvas.height / rect.height)]; };
+            
             const saveDrawingState = () => { drawingImage = ctx.getImageData(0, 0, canvas.width, canvas.height); };
-            const restoreDrawingState = (oldWidth, oldHeight) => { if (drawingImage) { const tempCanvas = document.createElement('canvas'); tempCanvas.width = oldWidth; tempCanvas.height = oldHeight; tempCanvas.getContext('2d').putImageData(drawingImage, 0, 0); ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.drawImage(tempCanvas, 0, 0, oldWidth, oldHeight, 0, 0, canvas.width, canvas.height); } };
-            const resizeCanvas = (width, height) => { const oldW = canvas.width, oldH = canvas.height; saveDrawingState(); canvas.width = width; canvas.height = height; ctx.strokeStyle = '#000'; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.lineWidth = brushSizeSlider.value; restoreDrawingState(oldW, oldH); };
+            
+            const restoreDrawingState = (oldWidth, oldHeight) => { 
+                if (drawingImage) { 
+                    const tempCanvas = document.createElement('canvas'); 
+                    tempCanvas.width = oldWidth; 
+                    tempCanvas.height = oldHeight; 
+                    tempCanvas.getContext('2d').putImageData(drawingImage, 0, 0); 
+                    
+                    // REGLA CLAVE: Restaurar fondo blanco antes de dibujar la imagen anterior
+                    ctx.fillStyle = "white"; 
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Dibujar la imagen anterior escalada
+                    ctx.drawImage(tempCanvas, 0, 0, oldWidth, oldHeight, 0, 0, canvas.width, canvas.height); 
+                } 
+            };
+
+            // Función mejorada de redimensionado para evitar pérdida de datos
+            const resizeCanvas = (width, height) => { 
+                if (canvas.width === width && canvas.height === height) return;
+                const oldW = canvas.width, oldH = canvas.height; 
+                saveDrawingState(); 
+                canvas.width = width; 
+                canvas.height = height; 
+                initContext(); // Restaurar propiedades del pincel
+                restoreDrawingState(oldW, oldH); 
+            };
+
+            // Listener para rotación de pantalla / cambio de tamaño de ventana
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(() => {
+                    const container = document.querySelector('.container');
+                    const newWidth = container.clientWidth - 40; // Margen de seguridad
+                    // Solo redimensionar si el modo expandido está activo o si el contenedor es menor que el canvas
+                    if (isCanvasExpanded || newWidth < originalCanvasSize.width) {
+                        const aspectRatio = originalCanvasSize.height / originalCanvasSize.width;
+                        resizeCanvas(newWidth, newWidth * aspectRatio);
+                    }
+                }, 100);
+            });
+
             const updateStatusIndicator = (text, color) => { statusText.textContent = text; statusDot.style.backgroundColor = color; };
             const updateProgress = (percentage, message) => { progressBar.style.width = `${percentage}%`; progressText.textContent = message; };
+            
             const startDrawing = e => { isDrawing = true; [lastX, lastY] = getPos(e); };
-            const draw = e => { if (!isDrawing) return; e.preventDefault(); const [x, y] = getPos(e); ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(x, y); ctx.stroke(); [lastX, lastY] = [x, y]; };
+            const draw = e => { 
+                if (!isDrawing) return; 
+                e.preventDefault(); 
+                const [x, y] = getPos(e); 
+                ctx.beginPath(); 
+                ctx.moveTo(lastX, lastY); 
+                ctx.lineTo(x, y); 
+                ctx.stroke(); 
+                [lastX, lastY] = [x, y]; 
+            };
             const stopDrawing = () => { isDrawing = false; saveDrawingState(); };
+            
             canvas.addEventListener('mousedown', startDrawing); canvas.addEventListener('mousemove', draw); canvas.addEventListener('mouseup', stopDrawing); canvas.addEventListener('mouseout', stopDrawing);
-            canvas.addEventListener('touchstart', startDrawing); canvas.addEventListener('touchmove', draw); canvas.addEventListener('touchend', stopDrawing);
-            clearBtn.addEventListener('click', () => { ctx.clearRect(0, 0, canvas.width, canvas.height); drawingImage = null; });
-            brushSizeSlider.addEventListener('input', e => { ctx.lineWidth = e.target.value; });
+            canvas.addEventListener('touchstart', startDrawing, {passive: false}); canvas.addEventListener('touchmove', draw, {passive: false}); canvas.addEventListener('touchend', stopDrawing);
+            
+            clearBtn.addEventListener('click', () => { 
+                ctx.fillStyle = "white"; 
+                ctx.fillRect(0, 0, canvas.width, canvas.height); 
+                drawingImage = null; 
+            });
+            
+            brushSizeSlider.addEventListener('input', e => { 
+                ctx.lineWidth = e.target.value; 
+            });
+
             analyzeBtn.addEventListener('click', analyzeDrawing);
+            
             fullscreenBtn.addEventListener('click', () => { const elem = document.querySelector('.container'); if (!document.fullscreenElement) { elem.requestFullscreen(); } else { document.exitFullscreen(); } });
-            toggleCanvasSizeBtn.addEventListener('click', () => { isCanvasExpanded = !isCanvasExpanded; document.body.classList.toggle('expanded-canvas-mode'); const newWidth = isCanvasExpanded ? window.innerWidth : originalCanvasSize.width; const newHeight = isCanvasExpanded ? window.innerHeight : originalCanvasSize.height; setTimeout(() => resizeCanvas(newWidth, newHeight), 50); });
+            
+            toggleCanvasSizeBtn.addEventListener('click', () => { 
+                isCanvasExpanded = !isCanvasExpanded; 
+                document.body.classList.toggle('expanded-canvas-mode'); 
+                const newWidth = isCanvasExpanded ? window.innerWidth : originalCanvasSize.width; 
+                const newHeight = isCanvasExpanded ? window.innerHeight : originalCanvasSize.height; 
+                resizeCanvas(newWidth, newHeight); 
+            });
+
             closeModalBtn.addEventListener('click', () => reportModal.classList.add('hidden'));
+            
             savePdfBtn.addEventListener('click', () => { const iframe = modalBody.querySelector('iframe'); if (iframe && iframe.contentWindow && iframe.contentWindow.document.body) { const elementToSave = iframe.contentWindow.document.querySelector('.container') || iframe.contentWindow.document.body; const opt = { margin: 10, filename: 'Informe_PsicoArt.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }; html2pdf().from(elementToSave).set(opt).save(); } else { alert("No se encontró contenido para guardar en PDF."); } });
             
             async function checkApiKeys() { try { const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_API_KEY}`; const response = await fetch(url); if (response.ok) { updateStatusIndicator("IA Conectada", "#4285F4"); return; } } catch (e) {} try { const url = 'https://api.openai.com/v1/models'; const response = await fetch(url, { headers: { 'Authorization': `Bearer ${OPENAI_API_KEY}` } }); if (response.ok) { updateStatusIndicator("IA Conectada", "#19C37D"); return; } } catch (e) {} updateStatusIndicator("IA no disponible. Revise sus API Keys.", "#DC3545"); }
             
             async function analyzeDrawing() {
-                if (isCanvasBlank(canvas)) { alert("Por favor, dibuje algo antes de generar el informe."); return; }
+                // Validación robusta: Crear un lienzo temporal BLANCO para asegurar que la IA vea el fondo
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = canvas.width;
+                tempCanvas.height = canvas.height;
+                const tCtx = tempCanvas.getContext('2d');
+                tCtx.fillStyle = "white";
+                tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                tCtx.drawImage(canvas, 0, 0);
+
+                // Comprobación de lienzo en blanco usando el temporal
+                const pixelData = tCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height).data;
+                const isBlank = !new Uint32Array(pixelData.buffer).some(pixel => pixel !== 0xFFFFFFFF && pixel !== 0); // Check if everything is white
+                
+                // NOTA: Para simplificar, si el usuario borró todo es blanco.
+                // Permitimos enviar si hay algo diferente a blanco puro.
+                const hasDrawing = Array.from(pixelData).some((val, i) => i % 4 !== 3 && val < 250); // Simple check for non-white pixels
+
+                if (!hasDrawing) { alert("Por favor, dibuje algo antes de generar el informe."); return; }
+                
                 progressModal.classList.remove('hidden'); analyzeBtn.disabled = true;
                 updateProgress(10, 'Capturando dibujo...');
-                const imageDataUrl = canvas.toDataURL('image/png');
+                
+                // Usar el lienzo temporal (Fondo Blanco Asegurado) para el Base64
+                const imageDataUrl = tempCanvas.toDataURL('image/png');
                 const base64Image = imageDataUrl.split(',')[1];
                 await new Promise(r => setTimeout(r, 200));
                 
@@ -121,7 +232,7 @@
 
                 analyzeBtn.disabled = false;
                 progressModal.classList.add('hidden');
-                updateProgress(0, 'Iniciando análisis...'); // Reset for next time
+                updateProgress(0, 'Iniciando análisis...'); 
 
                 if (analysisResult) {
                     modalBody.innerHTML = '';
@@ -133,8 +244,6 @@
                     alert("Error: No se pudo obtener el análisis. Revisa las API Keys y la consola del navegador.");
                 }
             }
-
-            const isCanvasBlank = canvas => !new Uint32Array(canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data.buffer).some(pixel => pixel !== 0);
             
             function getPromptForAI() {
                 const candidateId = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -209,7 +318,12 @@ Debes generar un documento HTML completo. Rellena las secciones marcadas con tu 
             async function callGeminiAPI(prompt, base64Image) { if (!GEMINI_API_KEY) throw new Error("API Key de Gemini no configurada."); const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`; const body = { contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: "image/png", data: base64Image } }] }] }; const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); if (!response.ok) throw new Error(`Error en la API de Gemini: ${response.statusText}`); const data = await response.json(); if (!data.candidates || !data.candidates[0].content.parts[0].text) throw new Error("Respuesta inesperada de Gemini."); return data.candidates[0].content.parts[0].text; };
             async function callOpenAIAPI(prompt, imageDataUrl) { if (!OPENAI_API_KEY) throw new Error("API Key de OpenAI no configurada."); const url = 'https://api.openai.com/v1/chat/completions'; const body = { model: "gpt-4o", messages: [{ role: "user", content: [{ type: "text", text: prompt }, { type: "image_url", image_url: { url: imageDataUrl } }] }], max_tokens: 4000 }; const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_API_KEY}` }, body: JSON.stringify(body) }); if (!response.ok) throw new Error(`Error en la API de OpenAI: ${response.statusText}`); const data = await response.json(); if (!data.choices || !data.choices[0].message.content) throw new Error("Respuesta inesperada de OpenAI."); return data.choices[0].message.content; };
             
-            ctx.fillStyle = "white"; ctx.fillRect(0, 0, canvas.width, canvas.height); saveDrawingState(); checkApiKeys();
+            // Inicializar fondo blanco y contexto
+            ctx.fillStyle = "white"; 
+            ctx.fillRect(0, 0, canvas.width, canvas.height); 
+            initContext();
+            saveDrawingState(); 
+            checkApiKeys();
         });
     } catch (e) {
         document.body.innerHTML = `<div style="text-align: center; padding: 20px;"><h1>Error al cargar la aplicación</h1><p>Hubo un problema al inicializar el script. Por favor, verifica que el código se haya copiado correctamente.</p><p style="color: grey; font-size: 0.8em;">${e.message}</p></div>`;
