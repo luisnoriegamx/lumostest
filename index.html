@@ -225,7 +225,7 @@
                 const base64Image = tempCanvas.toDataURL('image/png').split(',')[1];
                 const prompt = getPromptForAI();
                 
-                updateProgress(40, 'Analizando con Gemini AI...');
+                updateProgress(40, 'Analizando con Gemini 2.0 Flash...');
                 
                 try { 
                     const analysisResult = await callGeminiAPI(prompt, base64Image); 
@@ -269,12 +269,12 @@
 </html>`;
             }
 
-            // FUNCIÓN ACTUALIZADA A MODELO 'LATEST' PARA EVITAR ERROR 404
+            // FUNCIÓN ACTUALIZADA A MODELO 'gemini-2.0-flash'
             async function callGeminiAPI(prompt, base64Image) { 
                 if (!GEMINI_API_KEY) throw new Error("Falta API Key"); 
                 
-                // Usamos 'gemini-1.5-flash-latest' que es un alias más seguro para v1beta
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`; 
+                // CAMBIO APLICADO: Modelo 'gemini-2.0-flash'
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`; 
                 
                 const body = { 
                     contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: "image/png", data: base64Image } }] }] 
