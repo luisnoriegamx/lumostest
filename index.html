@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8"> 
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PsychoArt Test</title>
+    <title>PsychoArt Test (Secure)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root { --primary-color: #1d3557; --secondary-color: #6c757d; --danger-color: #e63946; }
@@ -57,10 +57,10 @@
         <div class="canvas-container">
             <canvas id="drawingCanvas" width="850" height="600"></canvas>
             <button id="fullscreenBtn" title="Pantalla Completa">🌐</button>
-            <button id="toggleCanvasSizeBtn" title="Expandir/Contraer Lienzo">↔️</button>
+            <button id="toggleCanvasSizeBtn" title="Expandir/Contraer Lienzo"↔️</button>
         </div>
         
-        <div class="status-indicator"><div id="status-dot"></div><span id="status-text">Verificando conexión con IA...</span></div>
+        <div class="status-indicator"><div id="status-dot"></div><span id="status-text">Iniciando sistema...</span></div>
         <button id="analyzeBtn">Generar Informe Psicológico</button>
     </div>
     
@@ -81,9 +81,6 @@
     
     <script>
     try {
-        // --- CONFIGURACIÓN API ---
-        const GEMINI_API_KEY = "AIzaSyCY1-5gyRNfDMndS3cxTRfdMjvoRtYsKeQ";
-
         document.addEventListener('DOMContentLoaded', () => {
             const canvas = document.getElementById('drawingCanvas'); 
             const ctx = canvas.getContext('2d', { willReadFrequently: true }); 
@@ -192,18 +189,8 @@
             
             savePdfBtn.addEventListener('click', () => { const iframe = modalBody.querySelector('iframe'); if (iframe && iframe.contentWindow && iframe.contentWindow.document.body) { const elementToSave = iframe.contentWindow.document.querySelector('.container') || iframe.contentWindow.document.body; const opt = { margin: 10, filename: 'Informe_PsicoArt.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }; html2pdf().from(elementToSave).set(opt).save(); } else { alert("No se encontró contenido para guardar en PDF."); } });
             
-            async function checkApiKeys() { 
-                try { 
-                    // Verificación simple de conectividad
-                    const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_API_KEY}`; 
-                    const response = await fetch(url); 
-                    if (response.ok) { updateStatusIndicator("IA Conectada", "#4285F4"); return; } 
-                } catch (e) {} 
-                updateStatusIndicator("Conexión Inestable", "#FFC107"); 
-            }
-            
             async function analyzeDrawing() {
-                // 1. Preparar imagen (Fondo Blanco)
+                // 1. Preparar imagen (Fondo Blanco Seguro)
                 const tempCanvas = document.createElement('canvas');
                 tempCanvas.width = canvas.width;
                 tempCanvas.height = canvas.height;
@@ -220,17 +207,18 @@
                 if (!hasDrawing) { alert("Por favor, dibuje algo antes de generar el informe."); return; }
                 
                 progressModal.classList.remove('hidden'); analyzeBtn.disabled = true;
-                updateProgress(10, 'Procesando imagen...');
+                updateProgress(10, 'Encriptando imagen...');
                 
                 const base64Image = tempCanvas.toDataURL('image/png').split(',')[1];
                 const prompt = getPromptForAI();
                 
-                updateProgress(40, 'Analizando con Gemini 2.0 Flash...');
+                updateProgress(30, 'Enviando a Servidor Seguro...');
                 
                 try { 
-                    const analysisResult = await callGeminiAPI(prompt, base64Image); 
+                    // AQUÍ ESTÁ EL CAMBIO IMPORTANTE:
+                    const analysisResult = await callBackendAPI(prompt, base64Image); 
                     
-                    updateProgress(100, 'Completado');
+                    updateProgress(100, 'Informe Recibido');
                     await new Promise(r => setTimeout(r, 500));
 
                     modalBody.innerHTML = '';
@@ -239,8 +227,8 @@
                     modalBody.appendChild(iframe);
                     reportModal.classList.remove('hidden');
                 } catch (error) { 
-                    console.error("Error detallado:", error);
-                    alert(`Error al analizar: ${error.message}\nVerifica la consola para más detalles.`);
+                    console.error("Error:", error);
+                    alert(`Error: ${error.message}`);
                 } finally {
                     analyzeBtn.disabled = false;
                     progressModal.classList.add('hidden');
@@ -261,38 +249,35 @@
 <head><style>body{font-family:sans-serif;padding:20px;color:#333}.card{border:1px solid #ddd;padding:15px;margin-bottom:15px;border-radius:8px;box-shadow:0 2px 5px rgba(0,0,0,0.05)}.header{background:#2c3e50;color:#fff;padding:15px;text-align:center;border-radius:8px}h2{color:#2c3e50;border-bottom:2px solid #3498db;padding-bottom:5px}</style></head>
 <body>
     <div class="header"><h1>Informe Psico-Proyectivo</h1><p>ID: ${candidateId} | Fecha: ${date}</p></div>
-    <div class="card"><h2>🧠 Resumen Ejecutivo</h2><p>[Análisis general de personalidad aquí]</p></div>
+    <div class="card"><h2>🧠 Resumen Ejecutivo</h2><p>[Análisis general]</p></div>
     <div class="card"><h2>📊 Rasgos Detectados</h2><ul><li>[Rasgo 1]</li><li>[Rasgo 2]</li><li>[Rasgo 3]</li></ul></div>
     <div class="card"><h2>⚠️ Áreas de Oportunidad</h2><p>[Banderas rojas o áreas a mejorar]</p></div>
-    <div class="card"><h2>🎯 Recomendación</h2><p>[Conclusión para RRHH]</p></div>
+    <div class="card"><h2>🎯 Recomendación</h2><p>[Conclusión]</p></div>
 </body>
 </html>`;
             }
 
-            // FUNCIÓN ACTUALIZADA A MODELO 'gemini-2.0-flash'
-            async function callGeminiAPI(prompt, base64Image) { 
-                if (!GEMINI_API_KEY) throw new Error("Falta API Key"); 
-                
-                // CAMBIO APLICADO: Modelo 'gemini-2.0-flash'
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`; 
-                
-                const body = { 
-                    contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: "image/png", data: base64Image } }] }] 
-                }; 
-                
-                const response = await fetch(url, { 
+            // FUNCIÓN SEGURA (Llama a tu Backend en Vercel)
+            async function callBackendAPI(prompt, base64Image) { 
+                const response = await fetch('/api/analyze', { 
                     method: 'POST', 
                     headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify(body) 
+                    body: JSON.stringify({ image: base64Image, prompt: prompt }) 
                 }); 
                 
                 if (!response.ok) {
                     const errorText = await response.text();
-                    throw new Error(`Gemini Error ${response.status}: ${errorText}`);
+                    // Intentar parsear el error si es JSON
+                    try {
+                        const errorJson = JSON.parse(errorText);
+                        throw new Error(errorJson.error || "Error en el servidor");
+                    } catch (e) {
+                        throw new Error(`Error ${response.status}: ${errorText}`);
+                    }
                 }
                 
                 const data = await response.json(); 
-                if (!data.candidates || !data.candidates[0].content) throw new Error("Respuesta vacía de IA");
+                if (!data.candidates || !data.candidates[0].content) throw new Error("La IA no devolvió datos válidos.");
                 return data.candidates[0].content.parts[0].text.replace(/```html|```/g, ''); 
             };
             
@@ -301,7 +286,8 @@
             ctx.fillRect(0, 0, canvas.width, canvas.height); 
             initContext();
             saveDrawingState(); 
-            checkApiKeys();
+            // Indicador visual de modo seguro
+            updateStatusIndicator("Modo Seguro (Serverless)", "#198754");
         });
     } catch (e) {
         console.error("Error fatal:", e);
@@ -309,4 +295,3 @@
     </script>
 </body>
 </html>
-
