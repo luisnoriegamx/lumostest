@@ -13,7 +13,6 @@
         h1 { color: var(--primary-color); font-size: 2em; }
         p { font-size: 1.1em; }
         .canvas-container { position: relative; display: inline-block; line-height: 0; max-width: 100%; border: 2px solid #ddd; border-radius: 8px; background-color: #fff; overflow: hidden; margin-top: 15px; }
-        /* Ajuste para que el canvas sea responsive en móviles */
         canvas { background-color: #fff; cursor: crosshair; touch-action: none; max-width: 100%; height: auto; display: block; border: none; }
         .controls { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; margin-bottom: 15px; gap: 15px; }
         .controls button, .controls input[type="range"], .controls label { font-size: 14px; }
@@ -82,9 +81,8 @@
     
     <script>
     try {
-        // CLAVES DE API (Asegúrate de que la de GEMINI tenga permisos y cuota)
+        // --- CONFIGURACIÓN API ---
         const GEMINI_API_KEY = "AIzaSyCY1-5gyRNfDMndS3cxTRfdMjvoRtYsKeQ";
-        const OPENAI_API_KEY = "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";
 
         document.addEventListener('DOMContentLoaded', () => {
             const canvas = document.getElementById('drawingCanvas'); 
@@ -99,7 +97,7 @@
             let drawingImage = null;
             let resizeTimeout;
 
-            // Configuración del pincel
+            // Configuración del contexto
             const initContext = () => {
                 ctx.lineJoin = 'round';
                 ctx.lineCap = 'round';
@@ -107,7 +105,6 @@
                 ctx.strokeStyle = '#000';
             };
 
-            // Obtener posición exacta (mouse o touch)
             const getPos = e => { 
                 const rect = canvas.getBoundingClientRect(); 
                 const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0); 
@@ -120,7 +117,6 @@
             
             const saveDrawingState = () => { drawingImage = ctx.getImageData(0, 0, canvas.width, canvas.height); };
             
-            // Restaurar dibujo al redimensionar (IMPORTANTE: Mantiene el fondo blanco)
             const restoreDrawingState = (oldWidth, oldHeight) => { 
                 if (drawingImage) { 
                     const tempCanvas = document.createElement('canvas'); 
@@ -144,7 +140,7 @@
                 restoreDrawingState(oldW, oldH); 
             };
 
-            // Listener responsive
+            // Responsive
             window.addEventListener('resize', () => {
                 clearTimeout(resizeTimeout);
                 resizeTimeout = setTimeout(() => {
@@ -173,7 +169,6 @@
             };
             const stopDrawing = () => { isDrawing = false; saveDrawingState(); };
             
-            // Eventos Mouse y Touch
             canvas.addEventListener('mousedown', startDrawing); canvas.addEventListener('mousemove', draw); canvas.addEventListener('mouseup', stopDrawing); canvas.addEventListener('mouseout', stopDrawing);
             canvas.addEventListener('touchstart', startDrawing, {passive: false}); canvas.addEventListener('touchmove', draw, {passive: false}); canvas.addEventListener('touchend', stopDrawing);
             
@@ -195,69 +190,61 @@
             });
             closeModalBtn.addEventListener('click', () => reportModal.classList.add('hidden'));
             
-            // PDF Export
             savePdfBtn.addEventListener('click', () => { const iframe = modalBody.querySelector('iframe'); if (iframe && iframe.contentWindow && iframe.contentWindow.document.body) { const elementToSave = iframe.contentWindow.document.querySelector('.container') || iframe.contentWindow.document.body; const opt = { margin: 10, filename: 'Informe_PsicoArt.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }; html2pdf().from(elementToSave).set(opt).save(); } else { alert("No se encontró contenido para guardar en PDF."); } });
             
             async function checkApiKeys() { 
-                // Verificamos conexión simple
-                try { const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_API_KEY}`; const response = await fetch(url); if (response.ok) { updateStatusIndicator("IA Conectada", "#4285F4"); return; } } catch (e) {} 
-                updateStatusIndicator("Error de conexión IA", "#DC3545"); 
+                try { 
+                    // Verificación simple de conectividad
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_API_KEY}`; 
+                    const response = await fetch(url); 
+                    if (response.ok) { updateStatusIndicator("IA Conectada", "#4285F4"); return; } 
+                } catch (e) {} 
+                updateStatusIndicator("Conexión Inestable", "#FFC107"); 
             }
             
             async function analyzeDrawing() {
-                // 1. Crear lienzo temporal BLANCO (Soluciona el problema de trazos invisibles)
+                // 1. Preparar imagen (Fondo Blanco)
                 const tempCanvas = document.createElement('canvas');
                 tempCanvas.width = canvas.width;
                 tempCanvas.height = canvas.height;
                 const tCtx = tempCanvas.getContext('2d');
                 
-                tCtx.fillStyle = "white"; // Fondo base
+                tCtx.fillStyle = "white"; 
                 tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-                tCtx.drawImage(canvas, 0, 0); // Pegar dibujo
+                tCtx.drawImage(canvas, 0, 0);
 
-                // 2. Verificar si está vacío
+                // 2. Validar contenido
                 const pixelData = tCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height).data;
                 const hasDrawing = Array.from(pixelData).some((val, i) => i % 4 !== 3 && val < 250); 
 
                 if (!hasDrawing) { alert("Por favor, dibuje algo antes de generar el informe."); return; }
                 
                 progressModal.classList.remove('hidden'); analyzeBtn.disabled = true;
-                updateProgress(10, 'Capturando dibujo...');
+                updateProgress(10, 'Procesando imagen...');
                 
-                // Generar Base64 desde el lienzo BLANCO
-                const imageDataUrl = tempCanvas.toDataURL('image/png');
-                const base64Image = imageDataUrl.split(',')[1];
-                
-                updateProgress(30, 'Analizando con IA...');
+                const base64Image = tempCanvas.toDataURL('image/png').split(',')[1];
                 const prompt = getPromptForAI();
-                let analysisResult = null;
                 
-                // Intentar SOLO Gemini primero (Versión corregida 1.5-flash)
+                updateProgress(40, 'Analizando con Gemini AI...');
+                
                 try { 
-                    analysisResult = await callGeminiAPI(prompt, base64Image); 
-                } catch (error) { 
-                    console.error("Gemini falló:", error); 
-                    updateProgress(60, 'Gemini falló. Intentando OpenAI...'); 
-                    // Fallback a OpenAI
-                    try { analysisResult = await callOpenAIAPI(prompt, imageDataUrl); } 
-                    catch (e2) { console.error("OpenAI también falló:", e2); }
-                }
-                
-                updateProgress(90, 'Generando reporte...');
-                await new Promise(r => setTimeout(r, 500));
+                    const analysisResult = await callGeminiAPI(prompt, base64Image); 
+                    
+                    updateProgress(100, 'Completado');
+                    await new Promise(r => setTimeout(r, 500));
 
-                analyzeBtn.disabled = false;
-                progressModal.classList.add('hidden');
-                updateProgress(0, 'Iniciando...'); 
-
-                if (analysisResult) {
                     modalBody.innerHTML = '';
                     const iframe = document.createElement('iframe');
                     iframe.srcdoc = analysisResult;
                     modalBody.appendChild(iframe);
                     reportModal.classList.remove('hidden');
-                } else {
-                    alert("Error: La IA no pudo procesar la solicitud. Revisa la consola para más detalles (Error 403 o 401).");
+                } catch (error) { 
+                    console.error("Error detallado:", error);
+                    alert(`Error al analizar: ${error.message}\nVerifica la consola para más detalles.`);
+                } finally {
+                    analyzeBtn.disabled = false;
+                    progressModal.classList.add('hidden');
+                    updateProgress(0, 'Iniciando...'); 
                 }
             }
             
@@ -265,29 +252,29 @@
                 const candidateId = Math.random().toString(36).substring(2, 8).toUpperCase();
                 const date = new Date().toLocaleDateString('es-ES');
                 return `
-**ROL:** Eres la Dra. Alva, experta en tests proyectivos (HTP, Machover, Lüscher) y grafología.
-**TAREA:** Analiza la imagen proporcionada (dibujo libre) y genera un **INFORME HTML** profesional.
-**REQUISITO TÉCNICO:** Devuelve SOLAMENTE código HTML válido. No uses Markdown (\`\`\`). 
+**ROL:** Psicóloga organizacional experta (Test HTP/Machover).
+**TAREA:** Analiza este dibujo y genera un informe HTML estricto.
+**FORMATO SALIDA:** Solo HTML válido.
 
-Estructura del HTML a devolver (RESPETA ESTE FORMATO):
 <!DOCTYPE html>
 <html lang="es">
 <head><style>body{font-family:sans-serif;padding:20px;color:#333}.card{border:1px solid #ddd;padding:15px;margin-bottom:15px;border-radius:8px;box-shadow:0 2px 5px rgba(0,0,0,0.05)}.header{background:#2c3e50;color:#fff;padding:15px;text-align:center;border-radius:8px}h2{color:#2c3e50;border-bottom:2px solid #3498db;padding-bottom:5px}</style></head>
 <body>
     <div class="header"><h1>Informe Psico-Proyectivo</h1><p>ID: ${candidateId} | Fecha: ${date}</p></div>
-    <div class="card"><h2>🧠 Resumen Ejecutivo</h2><p>[Inserta aquí el resumen de personalidad detectada]</p></div>
+    <div class="card"><h2>🧠 Resumen Ejecutivo</h2><p>[Análisis general de personalidad aquí]</p></div>
     <div class="card"><h2>📊 Rasgos Detectados</h2><ul><li>[Rasgo 1]</li><li>[Rasgo 2]</li><li>[Rasgo 3]</li></ul></div>
-    <div class="card"><h2>⚠️ Áreas de Oportunidad</h2><p>[Inserta áreas a mejorar o banderas rojas]</p></div>
-    <div class="card"><h2>🎯 Recomendación</h2><p>[Contratable / Contratable con reservas / No recomendable]</p></div>
+    <div class="card"><h2>⚠️ Áreas de Oportunidad</h2><p>[Banderas rojas o áreas a mejorar]</p></div>
+    <div class="card"><h2>🎯 Recomendación</h2><p>[Conclusión para RRHH]</p></div>
 </body>
 </html>`;
             }
 
-            // FUNCIÓN CORREGIDA: Usa gemini-1.5-flash (Versión estable)
+            // FUNCIÓN ACTUALIZADA A MODELO 'LATEST' PARA EVITAR ERROR 404
             async function callGeminiAPI(prompt, base64Image) { 
                 if (!GEMINI_API_KEY) throw new Error("Falta API Key"); 
-                // URL CORREGIDA AQUÍ ABAJO:
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`; 
+                
+                // Usamos 'gemini-1.5-flash-latest' que es un alias más seguro para v1beta
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`; 
                 
                 const body = { 
                     contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: "image/png", data: base64Image } }] }] 
@@ -305,30 +292,11 @@ Estructura del HTML a devolver (RESPETA ESTE FORMATO):
                 }
                 
                 const data = await response.json(); 
+                if (!data.candidates || !data.candidates[0].content) throw new Error("Respuesta vacía de IA");
                 return data.candidates[0].content.parts[0].text.replace(/```html|```/g, ''); 
             };
             
-            async function callOpenAIAPI(prompt, imageDataUrl) { 
-                if (!OPENAI_API_KEY) throw new Error("Falta API Key OpenAI");
-                const url = 'https://api.openai.com/v1/chat/completions'; 
-                const body = { 
-                    model: "gpt-4o", 
-                    messages: [{ role: "user", content: [{ type: "text", text: prompt }, { type: "image_url", image_url: { url: imageDataUrl } }] }], 
-                    max_tokens: 2000 
-                }; 
-                
-                const response = await fetch(url, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_API_KEY}` }, 
-                    body: JSON.stringify(body) 
-                }); 
-                
-                if (!response.ok) throw new Error(`OpenAI Error: ${response.status}`);
-                const data = await response.json(); 
-                return data.choices[0].message.content.replace(/```html|```/g, ''); 
-            };
-            
-            // Inicio: Fondo blanco obligatorio
+            // Inicialización
             ctx.fillStyle = "white"; 
             ctx.fillRect(0, 0, canvas.width, canvas.height); 
             initContext();
