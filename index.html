@@ -2,371 +2,959 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PsychoArt Test (Secure)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>PsychoArt Analytics | Test Proyectivo</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        :root { --primary-color: #1d3557; --secondary-color: #6c757d; --danger-color: #e63946; }
-        html, body { scroll-behavior: smooth; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f0f2f5; color: #333; display: flex; justify-content: center; align-items: flex-start; padding: 15px; margin: 0; box-sizing: border-box; }
-        .container { width: 100%; max-width: 900px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; }
-        
-        /* --- ESTILOS DEL LOGO --- */
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        :root {
+            --primary: #1a365d;
+            --primary-light: #2c5282;
+            --secondary: #4a5568;
+            --accent: #e53e3e;
+            --success: #2f855a;
+            --bg-light: #f7fafc;
+            --border: #e2e8f0;
+        }
+
+        html, body {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
         .app-logo {
             width: 70px;
             height: auto;
+            margin-bottom: 15px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .header p {
+            margin: 10px 0 0;
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+
+        /* Contenido */
+        .content {
+            padding: 30px;
+        }
+
+        /* Indicador de estado */
+        .status-card {
+            background: var(--bg-light);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+            border: 1px solid var(--border);
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #cbd5e0;
+            transition: background-color 0.3s;
+        }
+
+        #status-dot.connected {
+            background-color: var(--success);
+            box-shadow: 0 0 8px var(--success);
+        }
+
+        #status-dot.error {
+            background-color: var(--accent);
+        }
+
+        #status-text {
+            font-weight: 500;
+            color: var(--secondary);
+        }
+
+        .brush-control {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: white;
+            padding: 8px 15px;
+            border-radius: 40px;
+            border: 1px solid var(--border);
+        }
+
+        .brush-control label {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        #brushSize {
+            width: 150px;
+        }
+
+        /* Controles del lienzo */
+        .canvas-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-light);
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c53030;
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #2d3748;
+        }
+
+        .canvas-container {
+            position: relative;
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+
+        canvas {
             display: block;
-            margin: 0 auto 10px auto;
-            color: var(--primary-color);
+            width: 100%;
+            height: auto;
+            cursor: crosshair;
+            background: white;
+            touch-action: none;
         }
-        
-        h1 { color: var(--primary-color); font-size: 2em; margin-top: 0; }
-        p { font-size: 1.1em; }
-        .canvas-container { position: relative; display: inline-block; line-height: 0; max-width: 100%; border: 2px solid #ddd; border-radius: 8px; background-color: #fff; overflow: hidden; margin-top: 15px; }
-        canvas { background-color: #fff; cursor: crosshair; touch-action: none; max-width: 100%; height: auto; display: block; border: none; }
-        .controls { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; margin-bottom: 15px; gap: 15px; }
-        .controls button, .controls input[type="range"], .controls label { font-size: 14px; }
-        .controls button { padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; transition: background-color 0.3s; font-weight: bold; color: white; }
-        #clearBtn { background-color: var(--danger-color); }
-        #analyzeBtn { background-color: var(--secondary-color); width: 100%; max-width: 400px; margin-top: 10px; padding: 15px; font-size: 18px; }
-        #analyzeBtn:hover { background-color: #5a6268; }
-        #analyzeBtn:disabled { background-color: #adb5bd; cursor: not-allowed; }
-        .hidden { display: none !important; }
-        #fullscreenBtn, #toggleCanvasSizeBtn { position: absolute; padding: 6px 10px; font-size: 18px; background-color: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.8); border-radius: 8px; cursor: pointer; line-height: 1; backdrop-filter: blur(2px); z-index: 10; }
-        #fullscreenBtn { top: 10px; right: 10px; }
-        #toggleCanvasSizeBtn { top: 10px; right: 55px; }
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 15px; box-sizing: border-box; }
-        .modal-content { background: white; padding: 25px; border-radius: 10px; max-width: 800px; width: 100%; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px; }
-        .modal-header h2 { margin: 0; font-size: 1.5em; color: var(--primary-color); }
-        .modal-body { overflow-y: auto; flex-grow: 1; text-align: left; }
-        .modal-body iframe { width: 100%; height: 100%; min-height: 400px; border: none; }
-        .modal-footer { padding-top: 15px; margin-top: 15px; border-top: 1px solid #eee; text-align: right; display: flex; gap: 10px; justify-content: flex-end;}
-        .modal-footer button { padding: 10px 20px; }
-        #savePdfBtn { background-color: #2a9d8f; }
-        #closeModalBtn { background-color: #6c757d; }
-        #progress-container { width: 100%; max-width: 400px; text-align: center; }
-        #progress-bar-container { background-color: #e9ecef; border-radius: 5px; overflow: hidden; margin-bottom: 10px; }
-        #progress-bar { width: 0%; height: 20px; background-color: var(--secondary-color); border-radius: 5px; transition: width 0.4s ease; }
-        #progress-text { color: var(--primary-color); font-weight: 500; font-size: 1.1em; }
-        .status-indicator { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 15px; padding: 8px; background-color: #f8f9fa; border-radius: 20px; max-width: 350px; margin-left: auto; margin-right: auto; }
-        #status-dot { width: 15px; height: 15px; border-radius: 50%; background-color: #adb5bd; transition: background-color 0.5s; }
-        @media (max-width: 600px) { 
-            body { padding: 5px; } 
-            .container { padding: 10px; } 
-            h1 { font-size: 1.5em; } 
-            p { font-size: 0.9em; } 
-            .controls { flex-direction: column; gap: 12px; } 
-            .controls button { width: 80%; max-width: 300px; } 
-            #analyzeBtn { padding: 12px; font-size: 16px; } 
-            #fullscreenBtn, #toggleCanvasSizeBtn { font-size: 16px; padding: 5px 8px; } 
-            #toggleCanvasSizeBtn { right: 50px; } 
-            .modal-header h2 { font-size: 1.2em;}
-            .app-logo { width: 55px; }
+
+        .canvas-actions {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 8px;
+            z-index: 10;
         }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <svg class="app-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.55 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/>
-            <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.55 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/>
-            <circle cx="12" cy="12" r="3"/>
-        </svg>
-        
-        <h1>PsychoArt Analytics</h1>
-        <p>Instrucción: Pida al candidato que realice un dibujo libre en el siguiente lienzo.</p>
-        <div class="controls">
-            <label for="brushSize">Tamaño Pincel:</label>
-            <input type="range" id="brushSize" min="1" max="30" value="3">
-            <button id="clearBtn">Borrar Lienzo</button>
-        </div>
-        
-        <div class="canvas-container">
-            <canvas id="drawingCanvas" width="850" height="600"></canvas>
-            <button id="fullscreenBtn" title="Pantalla Completa">🌐</button>
-            <button id="toggleCanvasSizeBtn" title="Expandir/Contraer Lienzo">↔️</button>
-        </div>
-        
-        <div class="status-indicator"><div id="status-dot"></div><span id="status-text">Iniciando sistema...</span></div>
-        <button id="analyzeBtn">Generar Informe Psicológico</button>
-    </div>
-    
-    <div id="progressModal" class="modal-overlay hidden">
-        <div class="modal-content" style="max-width: 500px; text-align: center;">
-            <div class="modal-header" style="border-bottom: none;"><h2>Generando Informe</h2></div>
-            <div class="modal-body"><div id="progress-container"><div id="progress-bar-container"><div id="progress-bar"></div></div><p id="progress-text">Iniciando análisis...</p></div></div>
-        </div>
-    </div>
 
-    <div id="reportModal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <div class="modal-header"><h2>Informe de Análisis</h2></div>
-            <div class="modal-body" id="modalBody"></div>
-            <div class="modal-footer"><button id="savePdfBtn">Guardar PDF</button><button id="closeModalBtn">Cerrar</button></div>
-        </div>
-    </div>
-    
-    <script>
-    try {
-        document.addEventListener('DOMContentLoaded', () => {
-            const canvas = document.getElementById('drawingCanvas'); 
-            const ctx = canvas.getContext('2d', { willReadFrequently: true }); 
-            const analyzeBtn = document.getElementById('analyzeBtn'); const clearBtn = document.getElementById('clearBtn'); const brushSizeSlider = document.getElementById('brushSize'); const fullscreenBtn = document.getElementById('fullscreenBtn'); const toggleCanvasSizeBtn = document.getElementById('toggleCanvasSizeBtn'); const statusDot = document.getElementById('status-dot'); const statusText = document.getElementById('status-text');
-            const progressModal = document.getElementById('progressModal'); const progressBar = document.getElementById('progress-bar'); const progressText = document.getElementById('progress-text');
-            const reportModal = document.getElementById('reportModal'); const modalBody = document.getElementById('modalBody'); const closeModalBtn = document.getElementById('closeModalBtn'); const savePdfBtn = document.getElementById('savePdfBtn');
-            
-            let isDrawing = false, lastX = 0, lastY = 0; 
-            let isCanvasExpanded = false; 
-            const originalCanvasSize = { width: 850, height: 600 }; 
-            let drawingImage = null;
-            let resizeTimeout;
+        .icon-btn {
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-            // Configuración del contexto
-            const initContext = () => {
-                ctx.lineJoin = 'round';
-                ctx.lineCap = 'round';
-                ctx.lineWidth = brushSizeSlider.value;
-                ctx.strokeStyle = '#000';
-            };
+        .icon-btn:hover {
+            background: rgba(0,0,0,0.8);
+            transform: scale(1.05);
+        }
 
-            const getPos = e => { 
-                const rect = canvas.getBoundingClientRect(); 
-                const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0); 
-                const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0); 
-                return [
-                    (clientX - rect.left) * (canvas.width / rect.width), 
-                    (clientY - rect.top) * (canvas.height / rect.height)
-                ]; 
-            };
-            
-            const saveDrawingState = () => { drawingImage = ctx.getImageData(0, 0, canvas.width, canvas.height); };
-            
-            const restoreDrawingState = (oldWidth, oldHeight) => { 
-                if (drawingImage) { 
-                    const tempCanvas = document.createElement('canvas'); 
-                    tempCanvas.width = oldWidth; 
-                    tempCanvas.height = oldHeight; 
-                    tempCanvas.getContext('2d').putImageData(drawingImage, 0, 0); 
-                    
-                    ctx.fillStyle = "white"; 
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    ctx.drawImage(tempCanvas, 0, 0, oldWidth, oldHeight, 0, 0, canvas.width, canvas.height); 
-                } 
-            };
+        /* Botón principal */
+        .analyze-btn {
+            width: 100%;
+            padding: 16px;
+            font-size: 18px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--success) 0%, #38a169 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
 
-            const resizeCanvas = (width, height) => { 
-                if (canvas.width === width && canvas.height === height) return;
-                const oldW = canvas.width, oldH = canvas.height; 
-                saveDrawingState(); 
-                canvas.width = width; 
-                canvas.height = height; 
-                initContext(); 
-                restoreDrawingState(oldW, oldH); 
-            };
+        .analyze-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(47, 133, 90, 0.3);
+        }
 
-            // Responsive
-            window.addEventListener('resize', () => {
-                clearTimeout(resizeTimeout);
-                resizeTimeout = setTimeout(() => {
-                    const container = document.querySelector('.container');
-                    const newWidth = container.clientWidth - 40; 
-                    if (isCanvasExpanded || newWidth < originalCanvasSize.width) {
-                        const aspectRatio = originalCanvasSize.height / originalCanvasSize.width;
-                        resizeCanvas(newWidth, newWidth * aspectRatio);
-                    }
-                }, 100);
-            });
+        .analyze-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
 
-            const updateStatusIndicator = (text, color) => { statusText.textContent = text; statusDot.style.backgroundColor = color; };
-            const updateProgress = (percentage, message) => { progressBar.style.width = `${percentage}%`; progressText.textContent = message; };
-            
-            const startDrawing = e => { isDrawing = true; [lastX, lastY] = getPos(e); };
-            const draw = e => { 
-                if (!isDrawing) return; 
-                e.preventDefault(); 
-                const [x, y] = getPos(e); 
-                ctx.beginPath(); 
-                ctx.moveTo(lastX, lastY); 
-                ctx.lineTo(x, y); 
-                ctx.stroke(); 
-                [lastX, lastY] = [x, y]; 
-            };
-            const stopDrawing = () => { isDrawing = false; saveDrawingState(); };
-            
-            canvas.addEventListener('mousedown', startDrawing); canvas.addEventListener('mousemove', draw); canvas.addEventListener('mouseup', stopDrawing); canvas.addEventListener('mouseout', stopDrawing);
-            canvas.addEventListener('touchstart', startDrawing, {passive: false}); canvas.addEventListener('touchmove', draw, {passive: false}); canvas.addEventListener('touchend', stopDrawing);
-            
-            clearBtn.addEventListener('click', () => { 
-                ctx.fillStyle = "white"; 
-                ctx.fillRect(0, 0, canvas.width, canvas.height); 
-                drawingImage = null; 
-            });
-            
-            brushSizeSlider.addEventListener('input', e => { ctx.lineWidth = e.target.value; });
-            analyzeBtn.addEventListener('click', analyzeDrawing);
-            fullscreenBtn.addEventListener('click', () => { const elem = document.querySelector('.container'); if (!document.fullscreenElement) { elem.requestFullscreen(); } else { document.exitFullscreen(); } });
-            toggleCanvasSizeBtn.addEventListener('click', () => { 
-                isCanvasExpanded = !isCanvasExpanded; 
-                document.body.classList.toggle('expanded-canvas-mode'); 
-                const newWidth = isCanvasExpanded ? window.innerWidth : originalCanvasSize.width; 
-                const newHeight = isCanvasExpanded ? window.innerHeight : originalCanvasSize.height; 
-                resizeCanvas(newWidth, newHeight); 
-            });
-            closeModalBtn.addEventListener('click', () => reportModal.classList.add('hidden'));
-            
-            savePdfBtn.addEventListener('click', () => { const iframe = modalBody.querySelector('iframe'); if (iframe && iframe.contentWindow && iframe.contentWindow.document.body) { const elementToSave = iframe.contentWindow.document.querySelector('.container') || iframe.contentWindow.document.body; const opt = { margin: 10, filename: 'Informe_PsicoArt.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }; html2pdf().from(elementToSave).set(opt).save(); } else { alert("No se encontró contenido para guardar en PDF."); } });
-            
-            async function analyzeDrawing() {
-                // 1. Preparar imagen (Fondo Blanco Seguro)
-                const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = canvas.width;
-                tempCanvas.height = canvas.height;
-                const tCtx = tempCanvas.getContext('2d');
-                
-                tCtx.fillStyle = "white"; 
-                tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-                tCtx.drawImage(canvas, 0, 0);
+        /* Modales */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
 
-                // 2. Validar contenido
-                const pixelData = tCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height).data;
-                const hasDrawing = Array.from(pixelData).some((val, i) => i % 4 !== 3 && val < 250); 
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            max-width: 900px;
+            width: 100%;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
 
-                if (!hasDrawing) { alert("Por favor, dibuje algo antes de generar el informe."); return; }
-                
-                progressModal.classList.remove('hidden'); analyzeBtn.disabled = true;
-                updateProgress(10, 'Encriptando imagen...');
-                
-                const base64Image = tempCanvas.toDataURL('image/png').split(',')[1];
-                const prompt = getPromptForAI();
-                
-                updateProgress(30, 'Enviando a Servidor Seguro...');
-                
-                try { 
-                    const analysisResult = await callBackendAPI(prompt, base64Image); 
-                    
-                    updateProgress(100, 'Informe Recibido');
-                    await new Promise(r => setTimeout(r, 500));
+        .modal-header {
+            padding: 20px 25px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-                    modalBody.innerHTML = '';
-                    const iframe = document.createElement('iframe');
-                    iframe.srcdoc = analysisResult;
-                    modalBody.appendChild(iframe);
-                    reportModal.classList.remove('hidden');
-                } catch (error) { 
-                    console.error("Error:", error);
-                    alert(`Error: ${error.message}`);
-                } finally {
-                    analyzeBtn.disabled = false;
-                    progressModal.classList.add('hidden');
-                    updateProgress(0, 'Iniciando...'); 
-                }
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.4rem;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .modal-body iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
+        }
+
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        /* Progress modal */
+        .progress-container {
+            text-align: center;
+            padding: 30px;
+        }
+
+        .progress-bar-container {
+            background: var(--border);
+            border-radius: 50px;
+            overflow: hidden;
+            height: 30px;
+            margin: 20px 0;
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--success) 0%, #48bb78 100%);
+            transition: width 0.4s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .progress-text {
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
             }
             
-            // --- AQUÍ ESTÁ EL CAMBIO PRINCIPAL: Prompt Original Restaurado ---
-            function getPromptForAI() {
-                const candidateId = Math.random().toString(36).substring(2, 8).toUpperCase();
-                const date = new Date().toLocaleDateString('es-ES');
-                return `
-**ROL Y OBJETIVO:**
-Eres la Dra. Alva, una psicóloga organizacional experta en tests proyectivos, grafología y grafoscopía. Tu tarea es analizar la imagen de un dibujo y generar un informe de análisis de personalidad en formato **HTML**. El informe debe ser visualmente enriquecido, profesional y fácil de interpretar para RRHH.
+            .content {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.4rem;
+            }
+            
+            .status-card {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .brush-control {
+                justify-content: center;
+            }
+            
+            .btn {
+                padding: 8px 16px;
+            }
+            
+            .modal-body iframe {
+                height: 400px;
+            }
+        }
 
-**METODOLOGÍA DE ANÁLISIS:**
-1.  **Análisis Integral:** Combina principios de tests proyectivos, grafología (trazos, presión, formas) y grafoscopía (patrones motores) para un análisis profundo.
-2.  **Web Search:** Utiliza la búsqueda web para asegurar que tus interpretaciones sean actuales y relevantes.
-3.  **Tono Profesional:** Mantén un lenguaje clínico, objetivo y constructivo.
-
-**FORMATO OBLIGATORIO DE SALIDA (HTML):**
-Debes generar un documento HTML completo. Rellena las secciones marcadas con tu análisis. No modifiques la estructura HTML ni los estilos CSS.
-
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f4f7f9; color: #333; margin: 0; padding: 20px; }
-        .container { max-width: 800px; margin: auto; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .header { background-color: #2c3e50; color: white; padding: 25px; text-align: center; border-top-left-radius: 8px; border-top-right-radius: 8px; }
-        .header h1 { margin: 0; font-size: 28px; }
-        .header p { margin: 5px 0 0; font-size: 14px; opacity: 0.9; }
-        .card { margin: 20px; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; }
-        .card h2 { font-size: 20px; color: #34495e; border-bottom: 2px solid #3498db; padding-bottom: 10px; margin-top: 0; }
-        .trait-item { margin-bottom: 15px; }
-        .trait-name { font-weight: bold; margin-bottom: 5px; }
-        .progress-bar { background-color: #ecf0f1; border-radius: 5px; overflow: hidden; height: 20px; }
-        .progress { background-color: #3498db; height: 100%; text-align: right; color: white; font-size: 12px; line-height: 20px; padding-right: 5px; box-sizing: border-box; }
-        .analysis-list li { margin-bottom: 10px; line-height: 1.6; }
-        .disclaimer { font-size: 12px; color: #7f8c8d; text-align: center; padding: 20px; }
+        @media (max-width: 480px) {
+            .canvas-controls {
+                flex-wrap: wrap;
+            }
+            
+            .btn {
+                flex: 1;
+                text-align: center;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>Informe de Análisis Psico-Proyectivo</h1>
-            <p>ID de Candidato: ${candidateId} | Fecha: ${date}</p>
+            <svg class="app-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.55 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/>
+                <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.55 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/>
+                <circle cx="12" cy="12" r="3"/>
+            </svg>
+            <h1>PsychoArt Analytics</h1>
+            <p>Test Proyectivo de Personalidad para Selección de Talento</p>
         </div>
-        <div class="card">
-            <h2>🧠 Resumen Ejecutivo del Perfil</h2>
-            <p></p>
+
+        <div class="content">
+            <div class="status-card">
+                <div class="status-indicator">
+                    <div id="status-dot"></div>
+                    <span id="status-text">Inicializando...</span>
+                </div>
+                <div class="brush-control">
+                    <label>✏️ Tamaño:</label>
+                    <input type="range" id="brushSize" min="1" max="30" value="3">
+                    <span id="brushValue" style="min-width: 35px;">3px</span>
+                </div>
+            </div>
+
+            <div class="canvas-controls">
+                <button class="btn btn-secondary" id="clearBtn">🗑️ Borrar Lienzo</button>
+                <button class="btn btn-secondary" id="undoBtn">↩️ Deshacer</button>
+                <button class="btn btn-secondary" id="downloadDrawingBtn">💾 Guardar Dibujo</button>
+            </div>
+
+            <div class="canvas-container">
+                <canvas id="drawingCanvas" width="850" height="600"></canvas>
+                <div class="canvas-actions">
+                    <button class="icon-btn" id="fullscreenBtn" title="Pantalla completa">⛶</button>
+                    <button class="icon-btn" id="toggleCanvasSizeBtn" title="Expandir lienzo">↔️</button>
+                </div>
+            </div>
+
+            <button class="analyze-btn" id="analyzeBtn">
+                🧠 Generar Informe Psicológico
+            </button>
+            <p style="font-size: 12px; color: #718096; text-align: center; margin-top: 15px;">
+                📋 El análisis se basa en trazos, presión y composición del dibujo
+            </p>
         </div>
-        <div class="card">
-            <h2>📊 Análisis de Rasgos de Personalidad Clave</h2>
-            <div class="trait-item"><div class="trait-name">Nivel de Energía e Iniciativa</div><div class="progress-bar"><div class="progress" style="width: %;"> %</div></div><p><small>Interpretación breve...</small></p></div>
-            <div class="trait-item"><div class="trait-name">Estabilidad y Regulación Emocional</div><div class="progress-bar"><div class="progress" style="width: %;"> %</div></div><p><small>Interpretación breve...</small></p></div>
-            <div class="trait-item"><div class="trait-name">Apertura a la Experiencia y Creatividad</div><div class="progress-bar"><div class="progress" style="width: %;"> %</div></div><p><small>Interpretación breve...</small></p></div>
-            <div class="trait-item"><div class="trait-name">Confianza y Autoestima</div><div class="progress-bar"><div class="progress" style="width: %;"> %</div></div><p><small>Interpretación breve...</small></p></div>
-        </div>
-        <div class="card">
-            <h2>✅ Fortalezas Principales</h2>
-            <ul class="analysis-list"><li><strong>Fortaleza 1:</strong> Descripción...</li><li><strong>Fortaleza 2:</strong> Descripción...</li></ul>
-        </div>
-        <div class="card">
-            <h2>⚠️ Áreas de Oportunidad</h2>
-            <ul class="analysis-list"><li><strong>Área 1:</strong> Descripción...</li><li><strong>Área 2:</strong> Descripción...</li></ul>
-        </div>
-        <div class="card">
-            <h2>🎯 Recomendaciones Estratégicas para RRHH</h2>
-            <p></p>
-        </div>
-        <p class="disclaimer">Este informe se basa en la interpretación de un test proyectivo y debe ser considerado como una herramienta complementaria dentro de un proceso de selección integral. No constituye un diagnóstico clínico.</p>
     </div>
+
+    <!-- Modal de Progreso -->
+    <div id="progressModal" class="modal-overlay hidden">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2>🔄 Generando Informe</h2>
+            </div>
+            <div class="progress-container">
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progressBar">0%</div>
+                </div>
+                <p class="progress-text" id="progressText">Iniciando análisis...</p>
+                <p style="color: #718096; font-size: 13px; margin-top: 15px;">
+                    La IA está analizando el dibujo... esto puede tomar unos segundos
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal del Informe -->
+    <div id="reportModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📊 Informe de Análisis Psicológico</h2>
+                <button class="close-modal" id="closeModalBtn">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <iframe id="reportIframe" srcdoc="<p>Cargando informe...</p>"></iframe>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="copyReportBtn">📋 Copiar</button>
+                <button class="btn btn-primary" id="savePdfBtn">📄 Guardar como PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ========== DOM Elements ==========
+            const canvas = document.getElementById('drawingCanvas');
+            const ctx = canvas.getContext('2d');
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const undoBtn = document.getElementById('undoBtn');
+            const downloadDrawingBtn = document.getElementById('downloadDrawingBtn');
+            const brushSizeSlider = document.getElementById('brushSize');
+            const brushValue = document.getElementById('brushValue');
+            const fullscreenBtn = document.getElementById('fullscreenBtn');
+            const toggleCanvasSizeBtn = document.getElementById('toggleCanvasSizeBtn');
+            const statusDot = document.getElementById('status-dot');
+            const statusText = document.getElementById('status-text');
+            const progressModal = document.getElementById('progressModal');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const reportModal = document.getElementById('reportModal');
+            const modalBody = document.getElementById('modalBody');
+            const closeModalBtn = document.getElementById('closeModalBtn');
+            const copyReportBtn = document.getElementById('copyReportBtn');
+            const savePdfBtn = document.getElementById('savePdfBtn');
+            const reportIframe = document.getElementById('reportIframe');
+
+            // ========== Variables ==========
+            let isDrawing = false;
+            let lastX = 0, lastY = 0;
+            let isCanvasExpanded = false;
+            let history = [];
+            let currentHistoryIndex = -1;
+            const ORIGINAL_WIDTH = 850;
+            const ORIGINAL_HEIGHT = 600;
+
+            // ========== Funciones de Dibujo ==========
+            function initContext() {
+                ctx.lineJoin = 'round';
+                ctx.lineCap = 'round';
+                ctx.lineWidth = parseInt(brushSizeSlider.value);
+                ctx.strokeStyle = '#000000';
+                ctx.fillStyle = '#FFFFFF';
+            }
+
+            function saveToHistory() {
+                // Limpiar historial futuro si estamos en medio
+                if (currentHistoryIndex < history.length - 1) {
+                    history = history.slice(0, currentHistoryIndex + 1);
+                }
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                history.push(imageData);
+                currentHistoryIndex = history.length - 1;
+                
+                // Limitar historial a 50 estados
+                if (history.length > 50) {
+                    history.shift();
+                    currentHistoryIndex--;
+                }
+            }
+
+            function restoreFromHistory(index) {
+                if (index >= 0 && index < history.length) {
+                    ctx.putImageData(history[index], 0, 0);
+                    currentHistoryIndex = index;
+                }
+            }
+
+            function undo() {
+                if (currentHistoryIndex > 0) {
+                    restoreFromHistory(currentHistoryIndex - 1);
+                } else if (currentHistoryIndex === 0) {
+                    // Si es el primer estado, limpiar canvas
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    initContext();
+                }
+            }
+
+            function clearCanvas() {
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                initContext();
+                saveToHistory();
+                updateStatus("Lienzo limpiado", "#2f855a");
+            }
+
+            function downloadDrawing() {
+                const link = document.createElement('a');
+                link.download = `psychoart_dibujo_${Date.now()}.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+                updateStatus("Dibujo guardado", "#2f855a");
+                setTimeout(() => updateStatus("Listo para dibujar", "#2f855a"), 1500);
+            }
+
+            function getCanvasCoords(e) {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                
+                let clientX, clientY;
+                if (e.touches) {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else {
+                    clientX = e.clientX;
+                    clientY = e.clientY;
+                }
+                
+                let x = (clientX - rect.left) * scaleX;
+                let y = (clientY - rect.top) * scaleY;
+                
+                x = Math.max(0, Math.min(canvas.width, x));
+                y = Math.max(0, Math.min(canvas.height, y));
+                
+                return [x, y];
+            }
+
+            function startDrawing(e) {
+                e.preventDefault();
+                isDrawing = true;
+                const [x, y] = getCanvasCoords(e);
+                lastX = x;
+                lastY = y;
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+            }
+
+            function draw(e) {
+                if (!isDrawing) return;
+                e.preventDefault();
+                const [x, y] = getCanvasCoords(e);
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+                lastX = x;
+                lastY = y;
+            }
+
+            function stopDrawing() {
+                if (isDrawing) {
+                    isDrawing = false;
+                    saveToHistory();
+                }
+            }
+
+            // ========== Canvas Resize ==========
+            function resizeCanvas(width, height, preserveDrawing = true) {
+                if (canvas.width === width && canvas.height === height) return;
+                
+                let oldImageData = null;
+                if (preserveDrawing) {
+                    oldImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                initContext();
+                
+                if (oldImageData) {
+                    ctx.putImageData(oldImageData, 0, 0);
+                } else {
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(0, 0, width, height);
+                }
+                
+                saveToHistory();
+            }
+
+            function toggleCanvasSize() {
+                isCanvasExpanded = !isCanvasExpanded;
+                if (isCanvasExpanded) {
+                    resizeCanvas(window.innerWidth - 40, window.innerHeight - 200);
+                    updateStatus("Lienzo expandido", "#2f855a");
+                } else {
+                    resizeCanvas(ORIGINAL_WIDTH, ORIGINAL_HEIGHT);
+                    updateStatus("Lienzo restaurado", "#2f855a");
+                }
+            }
+
+            // ========== UI Updates ==========
+            function updateStatus(text, color) {
+                statusText.textContent = text;
+                statusDot.style.backgroundColor = color;
+                if (color === "#2f855a") {
+                    statusDot.classList.add('connected');
+                    statusDot.classList.remove('error');
+                } else if (color === "#e53e3e") {
+                    statusDot.classList.add('error');
+                    statusDot.classList.remove('connected');
+                }
+            }
+
+            function updateProgress(percentage, message) {
+                const percent = Math.min(100, Math.max(0, percentage));
+                progressBar.style.width = `${percent}%`;
+                progressBar.textContent = `${percent}%`;
+                progressText.textContent = message;
+            }
+
+            // ========== Función Principal de Análisis ==========
+            async function analyzeDrawing() {
+                // Verificar que haya dibujo
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = canvas.width;
+                tempCanvas.height = canvas.height;
+                const tCtx = tempCanvas.getContext('2d');
+                tCtx.fillStyle = "#FFFFFF";
+                tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                tCtx.drawImage(canvas, 0, 0);
+                
+                const pixelData = tCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height).data;
+                let hasDrawing = false;
+                for (let i = 0; i < pixelData.length; i += 4) {
+                    if (pixelData[i] < 250 || pixelData[i+1] < 250 || pixelData[i+2] < 250) {
+                        hasDrawing = true;
+                        break;
+                    }
+                }
+                
+                if (!hasDrawing) {
+                    alert("❌ Por favor, realiza un dibujo antes de generar el informe.");
+                    return;
+                }
+                
+                // Mostrar modal de progreso
+                progressModal.classList.remove('hidden');
+                analyzeBtn.disabled = true;
+                updateProgress(0, "Preparando imagen...");
+                
+                try {
+                    updateProgress(10, "Procesando dibujo...");
+                    await new Promise(r => setTimeout(r, 300));
+                    
+                    const base64Image = tempCanvas.toDataURL('image/png').split(',')[1];
+                    
+                    updateProgress(30, "Conectando con IA...");
+                    
+                    const prompt = getPromptForAI();
+                    
+                    updateProgress(50, "Analizando trazos y composición...");
+                    
+                    const result = await callBackendAPI(prompt, base64Image);
+                    
+                    updateProgress(100, "¡Informe generado!");
+                    await new Promise(r => setTimeout(r, 500));
+                    
+                    // Mostrar resultado
+                    reportIframe.srcdoc = result;
+                    reportModal.classList.remove('hidden');
+                    updateStatus("Análisis completado", "#2f855a");
+                    
+                } catch (error) {
+                    console.error("Error:", error);
+                    updateStatus("Error en el análisis", "#e53e3e");
+                    alert(`❌ Error: ${error.message || "No se pudo generar el informe. Intenta nuevamente."}`);
+                } finally {
+                    analyzeBtn.disabled = false;
+                    progressModal.classList.add('hidden');
+                    updateProgress(0, "");
+                }
+            }
+
+            // ========== Prompt Mejorado ==========
+            function getPromptForAI() {
+                const candidateId = 'PSY-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+                const date = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
+                
+                return `Eres la Dra. Alva, psicóloga organizacional experta en tests proyectivos (HTP, persona bajo la lluvia, gráficos). Analiza el dibujo y genera un informe profesional en HTML.
+
+**ANÁLISIS A REALIZAR:**
+1. Energía e iniciativa (tamaño, presión, trazo)
+2. Estabilidad emocional (continuidad, formas, espacio)
+3. Creatividad (originalidad, detalles, composición)
+4. Autoestima y confianza (ubicación, tamaño, proporciones)
+
+**FORMATO HTML OBLIGATORIO (sin modificar estructura):**
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;background:#f0f2f5;padding:20px;}
+    .container{max-width:900px;margin:0 auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.1);}
+    .header{background:linear-gradient(135deg, #1a365d 0%, #2c5282 100%);color:white;padding:30px;text-align:center;}
+    .header h1{font-size:1.8rem;margin-bottom:8px;}
+    .card{margin:20px;padding:20px;border-radius:12px;background:#f7fafc;}
+    .card h2{color:#1a365d;margin-bottom:15px;padding-bottom:8px;border-bottom:3px solid #4299e1;}
+    .trait{margin-bottom:20px;}
+    .trait-name{font-weight:700;margin-bottom:5px;color:#2d3748;}
+    .progress-bar{background:#e2e8f0;border-radius:8px;overflow:hidden;height:24px;margin:8px 0;}
+    .progress{background:linear-gradient(90deg, #4299e1 0%, #2f855a 100%);height:100%;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;color:white;font-size:12px;font-weight:600;}
+    ul, .analysis-list{padding-left:20px;margin:10px 0;}
+    li{margin:8px 0;line-height:1.5;}
+    .disclaimer{font-size:11px;color:#718096;text-align:center;padding:20px;border-top:1px solid #e2e8f0;margin-top:20px;}
+    .score{font-size:24px;font-weight:700;color:#4299e1;margin:10px 0;}
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>📋 Informe de Análisis Proyectivo</h1>
+        <p>ID: ${candidateId} | Fecha: ${date}</p>
+    </div>
+    <div class="card">
+        <h2>🧠 Perfil Psicológico Ejecutivo</h2>
+        <p>[Escribe aquí un resumen ejecutivo basado en el análisis del dibujo]</p>
+    </div>
+    <div class="card">
+        <h2>📊 Rasgos de Personalidad</h2>
+        <div class="trait"><div class="trait-name">⚡ Energía e Iniciativa</div><div class="progress-bar"><div class="progress" style="width: 0%;">0%</div></div><p>[Interpretación basada en tamaño y presión del trazo]</p></div>
+        <div class="trait"><div class="trait-name">🧘 Estabilidad Emocional</div><div class="progress-bar"><div class="progress" style="width: 0%;">0%</div></div><p>[Interpretación basada en continuidad y formas]</p></div>
+        <div class="trait"><div class="trait-name">🎨 Creatividad y Apertura</div><div class="progress-bar"><div class="progress" style="width: 0%;">0%</div></div><p>[Interpretación basada en originalidad y detalles]</p></div>
+        <div class="trait"><div class="trait-name">💪 Autoestima y Confianza</div><div class="progress-bar"><div class="progress" style="width: 0%;">0%</div></div><p>[Interpretación basada en ubicación y proporciones]</p></div>
+    </div>
+    <div class="card">
+        <h2>✅ Fortalezas Detectadas</h2>
+        <ul><li>[Fortaleza 1]</li><li>[Fortaleza 2]</li><li>[Fortaleza 3]</li></ul>
+    </div>
+    <div class="card">
+        <h2>⚠️ Áreas de Desarrollo</h2>
+        <ul><li>[Área 1]</li><li>[Área 2]</li></ul>
+    </div>
+    <div class="card">
+        <h2>🎯 Recomendaciones para RRHH</h2>
+        <p>[Recomendaciones estratégicas basadas en el perfil]</p>
+    </div>
+    <div class="disclaimer">⚠️ Este informe es una herramienta complementaria. No sustituye una evaluación psicológica completa.</div>
+</div>
 </body>
 </html>`;
             }
 
-            // FUNCIÓN SEGURA (Llama a tu Backend en Vercel)
-            async function callBackendAPI(prompt, base64Image) { 
-                const response = await fetch('/api/analyze', { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ image: base64Image, prompt: prompt }) 
-                }); 
+            // ========== Backend API Call ==========
+            async function callBackendAPI(prompt, base64Image) {
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: base64Image, prompt: prompt })
+                });
                 
                 if (!response.ok) {
-                    const errorText = await response.text();
-                    try {
-                        const errorJson = JSON.parse(errorText);
-                        throw new Error(errorJson.error || "Error en el servidor");
-                    } catch (e) {
-                        throw new Error(`Error ${response.status}: ${errorText}`);
-                    }
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
                 }
                 
-                const data = await response.json(); 
-                if (!data.candidates || !data.candidates[0].content) throw new Error("La IA no devolvió datos válidos.");
-                return data.candidates[0].content.parts[0].text.replace(/```html|```/g, ''); 
-            };
+                const data = await response.json();
+                
+                // Soporta múltiples formatos de respuesta
+                let resultText = null;
+                if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+                    resultText = data.candidates[0].content;
+                } else if (data.text) {
+                    resultText = data.text;
+                } else if (data.result) {
+                    resultText = data.result;
+                }
+                
+                // Si es objeto, extraer parts
+                if (resultText && typeof resultText === 'object' && resultText.parts) {
+                    resultText = resultText.parts[0].text;
+                }
+                
+                if (!resultText || typeof resultText !== 'string') {
+                    throw new Error("La IA no devolvió un formato válido");
+                }
+                
+                // Limpiar marcadores de código
+                return resultText.replace(/```html\\s*|```\\s*$/g, '');
+            }
+
+            // ========== Funciones del Modal ==========
+            async function copyReport() {
+                try {
+                    const iframeDoc = reportIframe.contentDocument || reportIframe.contentWindow.document;
+                    const textToCopy = iframeDoc.body.innerText;
+                    await navigator.clipboard.writeText(textToCopy);
+                    updateStatus("Informe copiado al portapapeles", "#2f855a");
+                    alert("✅ Informe copiado al portapapeles");
+                } catch (err) {
+                    alert("❌ No se pudo copiar el informe");
+                }
+            }
+
+            async function savePdf() {
+                try {
+                    const element = reportIframe.contentDocument.querySelector('.container') || reportIframe.contentDocument.body;
+                    const opt = {
+                        margin: [10, 10, 10, 10],
+                        filename: `PsychoArt_Informe_${Date.now()}.pdf`,
+                        image: { type: 'jpeg', quality: 0.98 },
+                        html2canvas: { scale: 2, useCORS: true, logging: false },
+                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                    };
+                    await html2pdf().set(opt).from(element).save();
+                    updateStatus("PDF guardado", "#2f855a");
+                } catch (err) {
+                    console.error("PDF Error:", err);
+                    alert("❌ Error al guardar PDF");
+                }
+            }
+
+            // ========== Event Listeners ==========
+            function setupEventListeners() {
+                // Dibujo
+                canvas.addEventListener('mousedown', startDrawing);
+                canvas.addEventListener('mousemove', draw);
+                canvas.addEventListener('mouseup', stopDrawing);
+                canvas.addEventListener('mouseleave', stopDrawing);
+                canvas.addEventListener('touchstart', startDrawing, { passive: false });
+                canvas.addEventListener('touchmove', draw, { passive: false });
+                canvas.addEventListener('touchend', stopDrawing);
+                
+                // Botones
+                clearBtn.addEventListener('click', clearCanvas);
+                undoBtn.addEventListener('click', undo);
+                downloadDrawingBtn.addEventListener('click', downloadDrawing);
+                analyzeBtn.addEventListener('click', analyzeDrawing);
+                fullscreenBtn.addEventListener('click', () => {
+                    const elem = document.querySelector('.container');
+                    if (!document.fullscreenElement) {
+                        elem.requestFullscreen();
+                    } else {
+                        document.exitFullscreen();
+                    }
+                });
+                toggleCanvasSizeBtn.addEventListener('click', toggleCanvasSize);
+                
+                // Brush size
+                brushSizeSlider.addEventListener('input', (e) => {
+                    const val = e.target.value;
+                    ctx.lineWidth = parseInt(val);
+                    brushValue.textContent = val + 'px';
+                });
+                
+                // Modales
+                closeModalBtn.addEventListener('click', () => reportModal.classList.add('hidden'));
+                copyReportBtn.addEventListener('click', copyReport);
+                savePdfBtn.addEventListener('click', savePdf);
+                
+                // Cerrar modal al hacer clic fuera
+                reportModal.addEventListener('click', (e) => {
+                    if (e.target === reportModal) reportModal.classList.add('hidden');
+                });
+                progressModal.addEventListener('click', (e) => {
+                    if (e.target === progressModal) progressModal.classList.add('hidden');
+                });
+            }
+
+            // ========== Inicialización ==========
+            function init() {
+                resizeCanvas(ORIGINAL_WIDTH, ORIGINAL_HEIGHT, false);
+                initContext();
+                saveToHistory();
+                setupEventListeners();
+                updateStatus("✅ Listo para dibujar", "#2f855a");
+                brushValue.textContent = brushSizeSlider.value + 'px';
+            }
             
-            // Inicialización
-            ctx.fillStyle = "white"; 
-            ctx.fillRect(0, 0, canvas.width, canvas.height); 
-            initContext();
-            saveDrawingState(); 
-            updateStatusIndicator("Modo Seguro (Serverless)", "#198754");
-        });
-    } catch (e) {
-        console.error("Error fatal:", e);
-    }
+            init();
+        })();
     </script>
 </body>
 </html>
