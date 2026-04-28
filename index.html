@@ -17,6 +17,7 @@
             --secondary: #4a5568;
             --accent: #e53e3e;
             --success: #2f855a;
+            --warning: #ed8936;
             --bg-light: #f7fafc;
             --border: #e2e8f0;
         }
@@ -43,7 +44,6 @@
             transition: all 0.3s ease;
         }
 
-        /* Header */
         .header {
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
             color: white;
@@ -70,12 +70,10 @@
             font-size: 0.95rem;
         }
 
-        /* Contenido */
         .content {
             padding: 30px;
         }
 
-        /* Indicador de estado */
         .status-card {
             background: var(--bg-light);
             border-radius: 12px;
@@ -101,6 +99,12 @@
             border-radius: 50%;
             background-color: #cbd5e0;
             transition: background-color 0.3s;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
 
         #status-dot.connected {
@@ -110,6 +114,10 @@
 
         #status-dot.error {
             background-color: var(--accent);
+        }
+
+        #status-dot.warning {
+            background-color: var(--warning);
         }
 
         #status-text {
@@ -136,12 +144,12 @@
             width: 150px;
         }
 
-        /* Controles del lienzo */
         .canvas-controls {
             display: flex;
             gap: 10px;
             justify-content: center;
             margin-bottom: 15px;
+            flex-wrap: wrap;
         }
 
         .btn {
@@ -180,6 +188,15 @@
 
         .btn-secondary:hover {
             background: #2d3748;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #22543d;
         }
 
         .canvas-container {
@@ -231,7 +248,6 @@
             transform: scale(1.05);
         }
 
-        /* Botón principal */
         .analyze-btn {
             width: 100%;
             padding: 16px;
@@ -256,7 +272,6 @@
             cursor: not-allowed;
         }
 
-        /* Modales */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -328,7 +343,6 @@
             gap: 10px;
         }
 
-        /* Progress modal */
         .progress-container {
             text-align: center;
             padding: 30px;
@@ -360,6 +374,15 @@
             font-weight: 500;
         }
 
+        .error-message {
+            background: #fed7d7;
+            border-left: 4px solid var(--accent);
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 8px;
+            color: #742a2a;
+        }
+
         .hidden {
             display: none !important;
         }
@@ -386,23 +409,8 @@
                 justify-content: center;
             }
             
-            .btn {
-                padding: 8px 16px;
-            }
-            
             .modal-body iframe {
                 height: 400px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .canvas-controls {
-                flex-wrap: wrap;
-            }
-            
-            .btn {
-                flex: 1;
-                text-align: center;
             }
         }
     </style>
@@ -433,16 +441,16 @@
             </div>
 
             <div class="canvas-controls">
-                <button class="btn btn-secondary" id="clearBtn">🗑️ Borrar Lienzo</button>
+                <button class="btn btn-secondary" id="clearBtn">🗑️ Borrar</button>
                 <button class="btn btn-secondary" id="undoBtn">↩️ Deshacer</button>
-                <button class="btn btn-secondary" id="downloadDrawingBtn">💾 Guardar Dibujo</button>
+                <button class="btn btn-secondary" id="downloadDrawingBtn">💾 Guardar</button>
             </div>
 
             <div class="canvas-container">
                 <canvas id="drawingCanvas" width="850" height="600"></canvas>
                 <div class="canvas-actions">
                     <button class="icon-btn" id="fullscreenBtn" title="Pantalla completa">⛶</button>
-                    <button class="icon-btn" id="toggleCanvasSizeBtn" title="Expandir lienzo">↔️</button>
+                    <button class="icon-btn" id="toggleCanvasSizeBtn" title="Expandir">↔️</button>
                 </div>
             </div>
 
@@ -455,7 +463,6 @@
         </div>
     </div>
 
-    <!-- Modal de Progreso -->
     <div id="progressModal" class="modal-overlay hidden">
         <div class="modal-content" style="max-width: 450px;">
             <div class="modal-header">
@@ -467,13 +474,12 @@
                 </div>
                 <p class="progress-text" id="progressText">Iniciando análisis...</p>
                 <p style="color: #718096; font-size: 13px; margin-top: 15px;">
-                    La IA está analizando el dibujo... esto puede tomar unos segundos
+                    La IA está analizando el dibujo... puede tomar hasta 30 segundos
                 </p>
             </div>
         </div>
     </div>
 
-    <!-- Modal del Informe -->
     <div id="reportModal" class="modal-overlay hidden">
         <div class="modal-content">
             <div class="modal-header">
@@ -485,14 +491,13 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" id="copyReportBtn">📋 Copiar</button>
-                <button class="btn btn-primary" id="savePdfBtn">📄 Guardar como PDF</button>
+                <button class="btn btn-primary" id="savePdfBtn">📄 Guardar PDF</button>
             </div>
         </div>
     </div>
 
     <script>
         (function() {
-            // ========== DOM Elements ==========
             const canvas = document.getElementById('drawingCanvas');
             const ctx = canvas.getContext('2d');
             const analyzeBtn = document.getElementById('analyzeBtn');
@@ -509,13 +514,11 @@
             const progressBar = document.getElementById('progressBar');
             const progressText = document.getElementById('progressText');
             const reportModal = document.getElementById('reportModal');
-            const modalBody = document.getElementById('modalBody');
             const closeModalBtn = document.getElementById('closeModalBtn');
             const copyReportBtn = document.getElementById('copyReportBtn');
             const savePdfBtn = document.getElementById('savePdfBtn');
             const reportIframe = document.getElementById('reportIframe');
 
-            // ========== Variables ==========
             let isDrawing = false;
             let lastX = 0, lastY = 0;
             let isCanvasExpanded = false;
@@ -524,7 +527,6 @@
             const ORIGINAL_WIDTH = 850;
             const ORIGINAL_HEIGHT = 600;
 
-            // ========== Funciones de Dibujo ==========
             function initContext() {
                 ctx.lineJoin = 'round';
                 ctx.lineCap = 'round';
@@ -534,15 +536,12 @@
             }
 
             function saveToHistory() {
-                // Limpiar historial futuro si estamos en medio
                 if (currentHistoryIndex < history.length - 1) {
                     history = history.slice(0, currentHistoryIndex + 1);
                 }
                 const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 history.push(imageData);
                 currentHistoryIndex = history.length - 1;
-                
-                // Limitar historial a 50 estados
                 if (history.length > 50) {
                     history.shift();
                     currentHistoryIndex--;
@@ -560,7 +559,6 @@
                 if (currentHistoryIndex > 0) {
                     restoreFromHistory(currentHistoryIndex - 1);
                 } else if (currentHistoryIndex === 0) {
-                    // Si es el primer estado, limpiar canvas
                     ctx.fillStyle = '#FFFFFF';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
                     initContext();
@@ -600,10 +598,8 @@
                 
                 let x = (clientX - rect.left) * scaleX;
                 let y = (clientY - rect.top) * scaleY;
-                
                 x = Math.max(0, Math.min(canvas.width, x));
                 y = Math.max(0, Math.min(canvas.height, y));
-                
                 return [x, y];
             }
 
@@ -638,26 +634,21 @@
                 }
             }
 
-            // ========== Canvas Resize ==========
             function resizeCanvas(width, height, preserveDrawing = true) {
                 if (canvas.width === width && canvas.height === height) return;
-                
                 let oldImageData = null;
                 if (preserveDrawing) {
                     oldImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 }
-                
                 canvas.width = width;
                 canvas.height = height;
                 initContext();
-                
                 if (oldImageData) {
                     ctx.putImageData(oldImageData, 0, 0);
                 } else {
                     ctx.fillStyle = '#FFFFFF';
                     ctx.fillRect(0, 0, width, height);
                 }
-                
                 saveToHistory();
             }
 
@@ -672,16 +663,17 @@
                 }
             }
 
-            // ========== UI Updates ==========
-            function updateStatus(text, color) {
+            function updateStatus(text, color, isError = false) {
                 statusText.textContent = text;
                 statusDot.style.backgroundColor = color;
                 if (color === "#2f855a") {
-                    statusDot.classList.add('connected');
-                    statusDot.classList.remove('error');
+                    statusDot.className = 'connected';
                 } else if (color === "#e53e3e") {
-                    statusDot.classList.add('error');
-                    statusDot.classList.remove('connected');
+                    statusDot.className = 'error';
+                } else if (color === "#ed8936") {
+                    statusDot.className = 'warning';
+                } else {
+                    statusDot.className = '';
                 }
             }
 
@@ -692,9 +684,7 @@
                 progressText.textContent = message;
             }
 
-            // ========== Función Principal de Análisis ==========
             async function analyzeDrawing() {
-                // Verificar que haya dibujo
                 const tempCanvas = document.createElement('canvas');
                 tempCanvas.width = canvas.width;
                 tempCanvas.height = canvas.height;
@@ -717,7 +707,6 @@
                     return;
                 }
                 
-                // Mostrar modal de progreso
                 progressModal.classList.remove('hidden');
                 analyzeBtn.disabled = true;
                 updateProgress(0, "Preparando imagen...");
@@ -739,15 +728,20 @@
                     updateProgress(100, "¡Informe generado!");
                     await new Promise(r => setTimeout(r, 500));
                     
-                    // Mostrar resultado
                     reportIframe.srcdoc = result;
                     reportModal.classList.remove('hidden');
                     updateStatus("Análisis completado", "#2f855a");
                     
                 } catch (error) {
                     console.error("Error:", error);
-                    updateStatus("Error en el análisis", "#e53e3e");
-                    alert(`❌ Error: ${error.message || "No se pudo generar el informe. Intenta nuevamente."}`);
+                    updateStatus("Error en el análisis", "#e53e3e", true);
+                    let errorMessage = error.message || "No se pudo generar el informe.";
+                    if (errorMessage.includes("fetch")) {
+                        errorMessage = "Error de conexión. Verifica tu internet.";
+                    } else if (errorMessage.includes("API")) {
+                        errorMessage = "El servicio de IA está ocupado. Intenta de nuevo.";
+                    }
+                    alert(`❌ Error: ${errorMessage}`);
                 } finally {
                     analyzeBtn.disabled = false;
                     progressModal.classList.add('hidden');
@@ -755,123 +749,140 @@
                 }
             }
 
-            // ========== Prompt Mejorado ==========
             function getPromptForAI() {
                 const candidateId = 'PSY-' + Math.random().toString(36).substring(2, 10).toUpperCase();
                 const date = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
                 
-                return `Eres la Dra. Alva, psicóloga organizacional experta en tests proyectivos (HTP, persona bajo la lluvia, gráficos). Analiza el dibujo y genera un informe profesional en HTML.
+                return `Eres la Dra. Alva, psicóloga organizacional experta en tests proyectivos. Analiza el dibujo adjunto y genera un informe profesional en formato HTML.
 
-**ANÁLISIS A REALIZAR:**
-1. Energía e iniciativa (tamaño, presión, trazo)
-2. Estabilidad emocional (continuidad, formas, espacio)
-3. Creatividad (originalidad, detalles, composición)
-4. Autoestima y confianza (ubicación, tamaño, proporciones)
+INSTRUCCIONES IMPORTANTES:
+1. Analiza el dibujo basándote en: tamaño y ubicación (autoestima), presión del trazo (energía), continuidad (estabilidad emocional), detalles y originalidad (creatividad)
+2. Genera un informe COMPLETO en HTML con TODAS las secciones requeridas
+3. Asigna porcentajes realistas (0-100%) para cada rasgo basados en el análisis visual
+4. Escribe en español, tono profesional pero accesible para RRHH
 
-**FORMATO HTML OBLIGATORIO (sin modificar estructura):**
+Aquí está el HTML que DEBES generar (reemplaza los textos entre [corchetes] con análisis real):
 
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-    *{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;background:#f0f2f5;padding:20px;}
-    .container{max-width:900px;margin:0 auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.1);}
-    .header{background:linear-gradient(135deg, #1a365d 0%, #2c5282 100%);color:white;padding:30px;text-align:center;}
-    .header h1{font-size:1.8rem;margin-bottom:8px;}
-    .card{margin:20px;padding:20px;border-radius:12px;background:#f7fafc;}
-    .card h2{color:#1a365d;margin-bottom:15px;padding-bottom:8px;border-bottom:3px solid #4299e1;}
-    .trait{margin-bottom:20px;}
-    .trait-name{font-weight:700;margin-bottom:5px;color:#2d3748;}
-    .progress-bar{background:#e2e8f0;border-radius:8px;overflow:hidden;height:24px;margin:8px 0;}
-    .progress{background:linear-gradient(90deg, #4299e1 0%, #2f855a 100%);height:100%;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;color:white;font-size:12px;font-weight:600;}
-    ul, .analysis-list{padding-left:20px;margin:10px 0;}
-    li{margin:8px 0;line-height:1.5;}
-    .disclaimer{font-size:11px;color:#718096;text-align:center;padding:20px;border-top:1px solid #e2e8f0;margin-top:20px;}
-    .score{font-size:24px;font-weight:700;color:#4299e1;margin:10px 0;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;background:#f0f2f5;padding:20px;}
+  .container{max-width:900px;margin:0 auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.1);}
+  .header{background:linear-gradient(135deg, #1a365d 0%, #2c5282 100%);color:white;padding:30px;text-align:center;}
+  .header h1{font-size:1.8rem;margin-bottom:8px;}
+  .card{margin:20px;padding:20px;border-radius:12px;background:#f7fafc;border:1px solid #e2e8f0;}
+  .card h2{color:#1a365d;margin-bottom:15px;padding-bottom:8px;border-bottom:3px solid #4299e1;}
+  .trait{margin-bottom:20px;}
+  .trait-name{font-weight:700;margin-bottom:5px;color:#2d3748;font-size:1.1rem;}
+  .progress-bar{background:#e2e8f0;border-radius:8px;overflow:hidden;height:24px;margin:8px 0;}
+  .progress{background:linear-gradient(90deg, #4299e1 0%, #2f855a 100%);height:100%;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;color:white;font-size:12px;font-weight:600;}
+  .analysis-list{padding-left:20px;margin:10px 0;}
+  li{margin:8px 0;line-height:1.5;}
+  .disclaimer{font-size:11px;color:#718096;text-align:center;padding:20px;border-top:1px solid #e2e8f0;margin-top:20px;}
 </style>
 </head>
 <body>
 <div class="container">
-    <div class="header">
-        <h1>📋 Informe de Análisis Proyectivo</h1>
-        <p>ID: ${candidateId} | Fecha: ${date}</p>
-    </div>
-    <div class="card">
-        <h2>🧠 Perfil Psicológico Ejecutivo</h2>
-        <p>[Escribe aquí un resumen ejecutivo basado en el análisis del dibujo]</p>
-    </div>
-    <div class="card">
-        <h2>📊 Rasgos de Personalidad</h2>
-        <div class="trait"><div class="trait-name">⚡ Energía e Iniciativa</div><div class="progress-bar"><div class="progress" style="width: 0%;">0%</div></div><p>[Interpretación basada en tamaño y presión del trazo]</p></div>
-        <div class="trait"><div class="trait-name">🧘 Estabilidad Emocional</div><div class="progress-bar"><div class="progress" style="width: 0%;">0%</div></div><p>[Interpretación basada en continuidad y formas]</p></div>
-        <div class="trait"><div class="trait-name">🎨 Creatividad y Apertura</div><div class="progress-bar"><div class="progress" style="width: 0%;">0%</div></div><p>[Interpretación basada en originalidad y detalles]</p></div>
-        <div class="trait"><div class="trait-name">💪 Autoestima y Confianza</div><div class="progress-bar"><div class="progress" style="width: 0%;">0%</div></div><p>[Interpretación basada en ubicación y proporciones]</p></div>
-    </div>
-    <div class="card">
-        <h2>✅ Fortalezas Detectadas</h2>
-        <ul><li>[Fortaleza 1]</li><li>[Fortaleza 2]</li><li>[Fortaleza 3]</li></ul>
-    </div>
-    <div class="card">
-        <h2>⚠️ Áreas de Desarrollo</h2>
-        <ul><li>[Área 1]</li><li>[Área 2]</li></ul>
-    </div>
-    <div class="card">
-        <h2>🎯 Recomendaciones para RRHH</h2>
-        <p>[Recomendaciones estratégicas basadas en el perfil]</p>
-    </div>
-    <div class="disclaimer">⚠️ Este informe es una herramienta complementaria. No sustituye una evaluación psicológica completa.</div>
+  <div class="header">
+    <h1>📋 Informe de Análisis Proyectivo</h1>
+    <p>ID: ${candidateId} | Fecha: ${date}</p>
+  </div>
+  <div class="card">
+    <h2>🧠 Perfil Psicológico Ejecutivo</h2>
+    <p>[Escribe un resumen ejecutivo de 3-4 líneas basado en el dibujo]</p>
+  </div>
+  <div class="card">
+    <h2>📊 Rasgos de Personalidad</h2>
+    <div class="trait"><div class="trait-name">⚡ Energía e Iniciativa</div><div class="progress-bar"><div class="progress" style="width: XX%;">XX%</div></div><p>[Interpretación basada en presión y tamaño del trazo]</p></div>
+    <div class="trait"><div class="trait-name">🧘 Estabilidad Emocional</div><div class="progress-bar"><div class="progress" style="width: YY%;">YY%</div></div><p>[Interpretación basada en continuidad y formas]</p></div>
+    <div class="trait"><div class="trait-name">🎨 Creatividad y Apertura</div><div class="progress-bar"><div class="progress" style="width: ZZ%;">ZZ%</div></div><p>[Interpretación basada en originalidad y detalles]</p></div>
+    <div class="trait"><div class="trait-name">💪 Autoestima y Confianza</div><div class="progress-bar"><div class="progress" style="width: WW%;">WW%</div></div><p>[Interpretación basada en ubicación y proporciones]</p></div>
+  </div>
+  <div class="card">
+    <h2>✅ Fortalezas Detectadas</h2>
+    <ul class="analysis-list"><li>[Fortaleza 1 basada en el dibujo]</li><li>[Fortaleza 2]</li><li>[Fortaleza 3]</li></ul>
+  </div>
+  <div class="card">
+    <h2>⚠️ Áreas de Desarrollo</h2>
+    <ul class="analysis-list"><li>[Área de mejora 1]</li><li>[Área de mejora 2]</li></ul>
+  </div>
+  <div class="card">
+    <h2>🎯 Recomendaciones para RRHH</h2>
+    <p>[Recomendaciones estratégicas basadas en el perfil]</p>
+  </div>
+  <div class="disclaimer">⚠️ Este informe es una herramienta complementaria dentro de un proceso de selección. No sustituye una evaluación psicológica completa.</div>
 </div>
 </body>
 </html>`;
             }
 
-            // ========== Backend API Call ==========
             async function callBackendAPI(prompt, base64Image) {
-                const response = await fetch('/api/analyze', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ image: base64Image, prompt: prompt })
-                });
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 45000); // 45 segundos timeout
                 
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
+                try {
+                    const response = await fetch('/api/analyze', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ image: base64Image, prompt: prompt }),
+                        signal: controller.signal
+                    });
+                    
+                    clearTimeout(timeoutId);
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    let resultText = null;
+                    if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+                        resultText = data.candidates[0].content;
+                    } else if (data.text) {
+                        resultText = data.text;
+                    } else if (data.result) {
+                        resultText = data.result;
+                    }
+                    
+                    if (resultText && typeof resultText === 'object' && resultText.parts) {
+                        resultText = resultText.parts[0].text;
+                    }
+                    
+                    if (!resultText || typeof resultText !== 'string') {
+                        throw new Error("La IA no devolvió un formato válido");
+                    }
+                    
+                    let cleanResult = resultText;
+                    cleanResult = cleanResult.replace(/```html\\s*/g, '');
+                    cleanResult = cleanResult.replace(/```\\s*$/g, '');
+                    cleanResult = cleanResult.replace(/```/g, '');
+                    
+                    if (!cleanResult.includes('<!DOCTYPE html>') && !cleanResult.includes('<html')) {
+                        cleanResult = `<html><body><div style="padding:20px"><h2>Informe de Análisis</h2><pre>${cleanResult}</pre></div></body></html>`;
+                    }
+                    
+                    return cleanResult;
+                } catch (error) {
+                    clearTimeout(timeoutId);
+                    if (error.name === 'AbortError') {
+                        throw new Error("La solicitud tomó demasiado tiempo. Intenta de nuevo.");
+                    }
+                    throw error;
                 }
-                
-                const data = await response.json();
-                
-                // Soporta múltiples formatos de respuesta
-                let resultText = null;
-                if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-                    resultText = data.candidates[0].content;
-                } else if (data.text) {
-                    resultText = data.text;
-                } else if (data.result) {
-                    resultText = data.result;
-                }
-                
-                // Si es objeto, extraer parts
-                if (resultText && typeof resultText === 'object' && resultText.parts) {
-                    resultText = resultText.parts[0].text;
-                }
-                
-                if (!resultText || typeof resultText !== 'string') {
-                    throw new Error("La IA no devolvió un formato válido");
-                }
-                
-                // Limpiar marcadores de código
-                return resultText.replace(/```html\\s*|```\\s*$/g, '');
             }
 
-            // ========== Funciones del Modal ==========
             async function copyReport() {
                 try {
                     const iframeDoc = reportIframe.contentDocument || reportIframe.contentWindow.document;
                     const textToCopy = iframeDoc.body.innerText;
                     await navigator.clipboard.writeText(textToCopy);
-                    updateStatus("Informe copiado al portapapeles", "#2f855a");
+                    updateStatus("Informe copiado", "#2f855a");
                     alert("✅ Informe copiado al portapapeles");
                 } catch (err) {
                     alert("❌ No se pudo copiar el informe");
@@ -896,9 +907,7 @@
                 }
             }
 
-            // ========== Event Listeners ==========
             function setupEventListeners() {
-                // Dibujo
                 canvas.addEventListener('mousedown', startDrawing);
                 canvas.addEventListener('mousemove', draw);
                 canvas.addEventListener('mouseup', stopDrawing);
@@ -907,7 +916,6 @@
                 canvas.addEventListener('touchmove', draw, { passive: false });
                 canvas.addEventListener('touchend', stopDrawing);
                 
-                // Botones
                 clearBtn.addEventListener('click', clearCanvas);
                 undoBtn.addEventListener('click', undo);
                 downloadDrawingBtn.addEventListener('click', downloadDrawing);
@@ -922,19 +930,16 @@
                 });
                 toggleCanvasSizeBtn.addEventListener('click', toggleCanvasSize);
                 
-                // Brush size
                 brushSizeSlider.addEventListener('input', (e) => {
                     const val = e.target.value;
                     ctx.lineWidth = parseInt(val);
                     brushValue.textContent = val + 'px';
                 });
                 
-                // Modales
                 closeModalBtn.addEventListener('click', () => reportModal.classList.add('hidden'));
                 copyReportBtn.addEventListener('click', copyReport);
                 savePdfBtn.addEventListener('click', savePdf);
                 
-                // Cerrar modal al hacer clic fuera
                 reportModal.addEventListener('click', (e) => {
                     if (e.target === reportModal) reportModal.classList.add('hidden');
                 });
@@ -943,7 +948,6 @@
                 });
             }
 
-            // ========== Inicialización ==========
             function init() {
                 resizeCanvas(ORIGINAL_WIDTH, ORIGINAL_HEIGHT, false);
                 initContext();
