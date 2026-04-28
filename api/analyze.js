@@ -2,18 +2,20 @@ export const config = {
     runtime: 'edge',
 };
 
-// Proveedores con claves válidas
+// Usar Google Gemini (más confiable para visión)
+// NOTA: Necesitas obtener una API KEY gratis en https://aistudio.google.com/
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || 'AIzaSyDZBcHcYqNqUQ0jKqLqLqLqLqLqLqLqLqLqLq'; // Reemplaza con tu key real
+
+// Fallback: OpenRouter con gemini-vision
 const PROVIDERS = [
     {
-        name: 'Groq Cloud',
-        url: () => 'https://api.groq.com/openai/v1/chat/completions',
-        key: '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',
-        model: 'llama-3.2-11b-vision-preview',
-        type: 'openai'
+        name: 'Google Gemini',
+        url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+        type: 'google'
     },
     {
-        name: 'OpenRouter',
-        url: () => 'https://openrouter.ai/api/v1/chat/completions',
+        name: 'OpenRouter Gemini',
+        url: 'https://openrouter.ai/api/v1/chat/completions',
         key: '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',
         model: 'google/gemini-2.0-flash-exp:free',
         type: 'openai'
@@ -21,7 +23,6 @@ const PROVIDERS = [
 ];
 
 export default async function handler(req) {
-    // Habilitar CORS
     const headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -44,64 +45,117 @@ export default async function handler(req) {
             return new Response(JSON.stringify({ error: 'Faltan datos: image y prompt son requeridos' }), { status: 400, headers });
         }
 
-        // Seleccionar proveedor aleatorio
-        const provider = PROVIDERS[Math.floor(Math.random() * PROVIDERS.length)];
+        // Intentar con Google Gemini primero
+        let result = null;
+        let error = null;
 
-        if (!provider.key) {
-            return new Response(JSON.stringify({ error: `Configuración inválida para ${provider.name}` }), { status: 500, headers });
+        // Proveedor 1: Google Gemini
+        try {
+            console.log('Intentando con Google Gemini...');
+            const geminiBody = {
+                contents: [{
+                    parts: [
+                        { text: prompt },
+                        { inline_data: { mime_type: "image/png", data: image } }
+                    ]
+                }],
+                generationConfig: {
+                    temperature: 0.7,
+                    maxOutputTokens: 4096
+                }
+            };
+
+            const geminiResponse = await fetch(PROVIDERS[0].url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(geminiBody)
+            });
+
+            const geminiData = await geminiResponse.json();
+            
+            if (geminiResponse.ok && geminiData.candidates && geminiData.candidates[0]) {
+                const text = geminiData.candidates[0].content.parts[0].text;
+                if (text) {
+                    result = text;
+                    console.log('✅ Google Gemini exitoso');
+                }
+            } else {
+                error = geminiData.error?.message || 'Respuesta inválida de Gemini';
+                console.log('Gemini falló:', error);
+            }
+        } catch (err) {
+            console.log('Error con Gemini:', err.message);
+            error = err.message;
         }
 
-        console.log(`Usando proveedor: ${provider.name}`);
+        // Si Gemini falla, intentar con OpenRouter
+        if (!result) {
+            try {
+                console.log('Intentando con OpenRouter...');
+                const openRouterBody = {
+                    model: PROVIDERS[1].model,
+                    messages: [{
+                        role: "user",
+                        content: [
+                            { type: "text", text: prompt },
+                            { type: "image_url", image_url: { url: `data:image/png;base64,${image}` } }
+                        ]
+                    }],
+                    max_tokens: 4096,
+                    temperature: 0.7
+                };
 
-        const body = {
-            model: provider.model,
-            messages: [{
-                role: "user",
-                content: [
-                    { type: "text", text: prompt },
-                    { type: "image_url", image_url: { url: `data:image/png;base64,${image}` } }
-                ]
-            }],
-            max_tokens: 4096,
-            temperature: 0.7
-        };
+                const orResponse = await fetch(PROVIDERS[1].url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${PROVIDERS[1].key}`,
+                        'HTTP-Referer': 'https://psychoart-test.vercel.app',
+                        'X-Title': 'PsychoArt Test'
+                    },
+                    body: JSON.stringify(openRouterBody)
+                });
 
-        const response = await fetch(provider.url(), {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${provider.key}`
-            },
-            body: JSON.stringify(body)
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            console.error('Error del proveedor:', data);
-            return new Response(JSON.stringify({ 
-                error: `Error del proveedor ${provider.name}`,
-                details: data.error || data
-            }), { status: response.status, headers });
+                const orData = await orResponse.json();
+                
+                if (orResponse.ok && orData.choices && orData.choices[0]) {
+                    result = orData.choices[0].message.content;
+                    console.log('✅ OpenRouter exitoso');
+                } else {
+                    error = orData.error?.message || 'Respuesta inválida de OpenRouter';
+                    console.log('OpenRouter falló:', error);
+                }
+            } catch (err) {
+                console.log('Error con OpenRouter:', err.message);
+                error = err.message;
+            }
         }
 
-        // Extraer texto de la respuesta
-        let resultText = data.choices?.[0]?.message?.content || data.choices?.[0]?.text || data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-        if (!resultText) {
+        // Si ambos fallan, devolver error detallado
+        if (!result) {
             return new Response(JSON.stringify({ 
-                error: 'Respuesta vacía del proveedor',
-                provider: provider.name
+                error: 'No se pudo generar el análisis',
+                details: 'Ambos proveedores fallaron. Por favor, intenta nuevamente.',
+                technical: error
             }), { status: 500, headers });
         }
 
-        // Devolver en formato compatible con el frontend
+        // Limpiar el resultado de posibles marcadores HTML
+        let cleanResult = result;
+        if (cleanResult.startsWith('```html')) {
+            cleanResult = cleanResult.replace(/```html/g, '').replace(/```/g, '');
+        }
+        if (cleanResult.startsWith('```')) {
+            cleanResult = cleanResult.replace(/```/g, '');
+        }
+
+        // Devolver en formato compatible
         return new Response(JSON.stringify({
             candidates: [{
-                content: resultText
+                content: cleanResult
             }],
-            provider: provider.name,
-            success: true
+            success: true,
+            provider: result.includes('Gemini') ? 'Google Gemini' : 'OpenRouter'
         }), { status: 200, headers });
 
     } catch (error) {
