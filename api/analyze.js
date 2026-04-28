@@ -2,7 +2,7 @@ export const config = {
     runtime: 'edge',
 };
 
-// Solo usar proveedores con claves válidas (las que están hardcodeadas funcionan)
+// Proveedores con claves válidas
 const PROVIDERS = [
     {
         name: 'Groq Cloud',
@@ -21,18 +21,37 @@ const PROVIDERS = [
 ];
 
 export default async function handler(req) {
+    // Habilitar CORS
+    const headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Content-Type': 'application/json'
+    };
+
+    if (req.method === 'OPTIONS') {
+        return new Response(null, { status: 204, headers });
+    }
+
     if (req.method !== 'POST') {
-        return new Response("Método no permitido", { status: 405 });
+        return new Response(JSON.stringify({ error: 'Método no permitido' }), { status: 405, headers });
     }
 
     try {
         const { image, prompt } = await req.json();
 
+        if (!image || !prompt) {
+            return new Response(JSON.stringify({ error: 'Faltan datos: image y prompt son requeridos' }), { status: 400, headers });
+        }
+
+        // Seleccionar proveedor aleatorio
         const provider = PROVIDERS[Math.floor(Math.random() * PROVIDERS.length)];
 
         if (!provider.key) {
-            return new Response(JSON.stringify({ error: `Clave API ausente para ${provider.name}` }), { status: 500 });
+            return new Response(JSON.stringify({ error: `Configuración inválida para ${provider.name}` }), { status: 500, headers });
         }
+
+        console.log(`Usando proveedor: ${provider.name}`);
 
         const body = {
             model: provider.model,
@@ -42,46 +61,54 @@ export default async function handler(req) {
                     { type: "text", text: prompt },
                     { type: "image_url", image_url: { url: `data:image/png;base64,${image}` } }
                 ]
-            }]
+            }],
+            max_tokens: 4096,
+            temperature: 0.7
         };
 
         const response = await fetch(provider.url(), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${provider.key}`,
-                'HTTP-Referer': 'https://psychoart-test.vercel.app',
-                'X-Title': 'PsychoArt Test'
+                'Authorization': `Bearer ${provider.key}`
             },
             body: JSON.stringify(body)
         });
 
         const data = await response.json();
-        
-        // Extraer texto del formato OpenAI
-        const resultText = data.choices?.[0]?.message?.content || "";
+
+        if (!response.ok) {
+            console.error('Error del proveedor:', data);
+            return new Response(JSON.stringify({ 
+                error: `Error del proveedor ${provider.name}`,
+                details: data.error || data
+            }), { status: response.status, headers });
+        }
+
+        // Extraer texto de la respuesta
+        let resultText = data.choices?.[0]?.message?.content || data.choices?.[0]?.text || data.candidates?.[0]?.content?.parts?.[0]?.text;
 
         if (!resultText) {
             return new Response(JSON.stringify({ 
-                error: "Fallo en el análisis", 
-                details: data.error || "Respuesta vacía",
-                provider: provider.name 
-            }), { status: 500 });
+                error: 'Respuesta vacía del proveedor',
+                provider: provider.name
+            }), { status: 500, headers });
         }
 
-        // Devolver en el formato que espera el frontend
+        // Devolver en formato compatible con el frontend
         return new Response(JSON.stringify({
             candidates: [{
-                content: {
-                    parts: [{ text: resultText }]
-                }
+                content: resultText
             }],
-            provider: provider.name
-        }), {
-            headers: { 'Content-Type': 'application/json' }
-        });
+            provider: provider.name,
+            success: true
+        }), { status: 200, headers });
 
     } catch (error) {
-        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+        console.error('Error interno:', error);
+        return new Response(JSON.stringify({ 
+            error: 'Error interno del servidor',
+            message: error.message
+        }), { status: 500, headers });
     }
 }
