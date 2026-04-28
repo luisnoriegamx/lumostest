@@ -499,7 +499,7 @@
     <script>
         (function() {
             const canvas = document.getElementById('drawingCanvas');
-            const ctx = canvas.getContext('2d');
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
             const analyzeBtn = document.getElementById('analyzeBtn');
             const clearBtn = document.getElementById('clearBtn');
             const undoBtn = document.getElementById('undoBtn');
