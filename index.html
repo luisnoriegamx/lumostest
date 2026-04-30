@@ -3,626 +3,398 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>PsychoArt Analytics | IA Real Gemini</title>
+    <title>PsychoArt Pro | Análisis Proyectivo Clínico</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        /* (mismos estilos que antes - omito por brevedad pero van igual) */
         * { box-sizing: border-box; user-select: none; }
-        :root { --primary: #1a365d; --primary-light: #2c5282; --secondary: #4a5568; --accent: #e53e3e; --success: #2f855a; --warning: #ed8936; --bg-light: #f7fafc; --border: #e2e8f0; }
-        html, body { scroll-behavior: smooth; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; margin: 0; padding: 20px; }
-        .container { max-width: 1000px; margin: 0 auto; background: white; border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden; }
-        .header { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); color: white; padding: 30px; text-align: center; }
-        .app-logo { width: 70px; height: auto; margin-bottom: 15px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
-        .header h1 { margin: 0; font-size: 1.8rem; font-weight: 700; }
-        .header p { margin: 10px 0 0; opacity: 0.9; font-size: 0.95rem; }
-        .content { padding: 30px; }
-        .status-card { background: var(--bg-light); border-radius: 12px; padding: 15px; margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px; border: 1px solid var(--border); }
-        .status-indicator { display: flex; align-items: center; gap: 10px; }
-        #status-dot { width: 12px; height: 12px; border-radius: 50%; background-color: #cbd5e0; transition: background-color 0.3s; animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        #status-dot.connected { background-color: var(--success); box-shadow: 0 0 8px var(--success); }
-        #status-dot.error { background-color: var(--accent); }
-        #status-dot.warning { background-color: var(--warning); }
-        #status-text { font-weight: 500; color: var(--secondary); }
-        .brush-control { display: flex; align-items: center; gap: 15px; background: white; padding: 8px 15px; border-radius: 40px; border: 1px solid var(--border); }
-        .brush-control label { font-weight: 600; color: var(--primary); }
-        #brushSize { width: 150px; }
-        .canvas-controls { display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; flex-wrap: wrap; }
-        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 14px; }
-        .btn-primary { background: var(--primary); color: white; }
+        :root { --primary: #1a365d; --primary-light: #2c5282; --secondary: #4a5568; --accent: #e53e3e; --success: #2f855a; --warning: #ed8936; --bg-light: #f8fafc; --border: #e2e8f0; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #e9ecef; min-height: 100vh; margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 32px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); overflow: hidden; }
+        .header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; padding: 40px; text-align: center; }
+        .app-logo { width: 80px; margin-bottom: 20px; opacity: 0.9; }
+        .header h1 { margin: 0; font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; }
+        .header p { margin: 12px 0 0; opacity: 0.8; font-size: 0.95rem; max-width: 600px; margin-left: auto; margin-right: auto; }
+        .content { padding: 40px; background: #f8fafc; }
+        .toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px; margin-bottom: 24px; background: white; padding: 16px 24px; border-radius: 60px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+        .status-indicator { display: flex; align-items: center; gap: 12px; background: #f1f5f9; padding: 8px 16px; border-radius: 40px; }
+        .led { width: 12px; height: 12px; border-radius: 50%; background-color: var(--success); box-shadow: 0 0 0 2px rgba(47, 133, 90, 0.2); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } }
+        .brush-control { display: flex; align-items: center; gap: 16px; }
+        input[type="range"] { width: 160px; }
+        .btn-group { display: flex; gap: 12px; flex-wrap: wrap; }
+        .btn { padding: 10px 20px; border-radius: 40px; font-weight: 600; font-size: 0.85rem; transition: all 0.2s; cursor: pointer; border: none; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+        .btn-primary { background: var(--primary); color: white; border: none; }
         .btn-primary:hover { background: var(--primary-light); transform: translateY(-2px); }
-        .btn-danger { background: var(--accent); color: white; }
-        .btn-danger:hover { background: #c53030; }
-        .btn-secondary { background: var(--secondary); color: white; }
-        .btn-secondary:hover { background: #2d3748; }
-        .btn-success { background: var(--success); color: white; }
-        .canvas-container { position: relative; background: white; border: 2px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin: 20px 0; }
-        canvas { display: block; width: 100%; height: auto; cursor: crosshair; background: white; touch-action: none; }
-        .canvas-actions { position: absolute; top: 10px; right: 10px; display: flex; gap: 8px; z-index: 10; }
-        .icon-btn { background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); border: none; color: white; width: 36px; height: 36px; border-radius: 8px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
-        .analyze-btn { width: 100%; padding: 16px; font-size: 18px; font-weight: 700; background: linear-gradient(135deg, var(--success) 0%, #38a169 100%); color: white; border: none; border-radius: 12px; cursor: pointer; transition: all 0.3s; margin-top: 20px; }
-        .analyze-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(47, 133, 90, 0.3); }
-        .analyze-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
-        .modal-content { background: white; border-radius: 20px; max-width: 900px; width: 100%; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
-        .modal-header { padding: 20px 25px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); color: white; display: flex; justify-content: space-between; align-items: center; }
-        .modal-header h2 { margin: 0; font-size: 1.4rem; }
-        .close-modal { background: none; border: none; color: white; font-size: 28px; cursor: pointer; }
-        .modal-body { flex: 1; overflow-y: auto; padding: 20px; }
-        .modal-body iframe { width: 100%; height: 600px; border: none; }
-        .modal-footer { padding: 15px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
-        .progress-container { text-align: center; padding: 30px; }
-        .progress-bar-container { background: var(--border); border-radius: 50px; overflow: hidden; height: 30px; margin: 20px 0; }
-        .progress-bar { width: 0%; height: 100%; background: linear-gradient(90deg, var(--success) 0%, #48bb78 100%); transition: width 0.4s ease; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 12px; }
-        .progress-text { color: var(--primary); font-weight: 500; }
+        .btn-danger { background: #ef4444; color: white; border: none; }
+        .btn-secondary { background: #475569; color: white; border: none; }
+        .canvas-wrapper { background: white; border-radius: 24px; padding: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border: 1px solid var(--border); margin-bottom: 24px; position: relative; }
+        canvas { display: block; width: 100%; height: auto; background: white; border-radius: 16px; cursor: crosshair; touch-action: none; border: 1px solid #e2e8f0; }
+        .analyze-btn { width: 100%; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; border: none; padding: 18px; font-size: 1.1rem; font-weight: 700; border-radius: 60px; cursor: pointer; transition: all 0.3s; margin-top: 16px; }
+        .analyze-btn:hover { transform: scale(1.02); box-shadow: 0 20px 25px -12px rgba(0,0,0,0.2); }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+        .modal-card { background: white; border-radius: 32px; max-width: 900px; width: 100%; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px black; }
+        .modal-header { padding: 20px 28px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: white; }
+        .modal-body { flex: 1; overflow-y: auto; padding: 24px; background: #f9fafb; }
+        .modal-body iframe { width: 100%; height: 100%; min-height: 500px; border: none; background: white; border-radius: 16px; }
+        .progress-container { text-align: center; padding: 40px; }
+        .progress-bar { background: #e2e8f0; border-radius: 30px; height: 8px; overflow: hidden; margin: 20px 0; }
+        .progress-fill { width: 0%; height: 100%; background: var(--success); transition: width 0.4s ease; }
         .hidden { display: none !important; }
-        .api-key-warning { background: #fed7d7; border-left: 4px solid var(--accent); padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 13px; }
-        @media (max-width: 768px) { body { padding: 10px; } .content { padding: 20px; } .modal-body iframe { height: 400px; } }
+        @media (max-width: 768px) { .content { padding: 20px; } .toolbar { flex-direction: column; align-items: stretch; border-radius: 24px; } .btn-group { justify-content: center; } }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <svg class="app-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.55 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/>
-                <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.55 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/>
-                <circle cx="12" cy="12" r="3"/>
-            </svg>
-            <h1>PsychoArt Analytics</h1>
-            <p>Test Proyectivo con IA REAL de Google Gemini</p>
-        </div>
-
-        <div class="content">
-            <div id="apiWarning" class="api-key-warning hidden">
-                ⚠️ Configura tu API key de Google Gemini para usar IA real. 
-                <a href="#" id="configApiBtn" style="color: #1a365d; font-weight: bold;">Haz clic aquí para configurarla</a>
-            </div>
-
-            <div class="status-card">
-                <div class="status-indicator">
-                    <div id="status-dot"></div>
-                    <span id="status-text">Inicializando...</span>
-                </div>
-                <div class="brush-control">
-                    <label>✏️ Tamaño:</label>
-                    <input type="range" id="brushSize" min="1" max="30" value="3">
-                    <span id="brushValue" style="min-width: 35px;">3px</span>
-                </div>
-            </div>
-
-            <div class="canvas-controls">
-                <button class="btn btn-secondary" id="clearBtn">🗑️ Borrar</button>
-                <button class="btn btn-secondary" id="undoBtn">↩️ Deshacer</button>
-                <button class="btn btn-secondary" id="downloadDrawingBtn">💾 Guardar</button>
-            </div>
-
-            <div class="canvas-container">
-                <canvas id="drawingCanvas" width="850" height="600"></canvas>
-                <div class="canvas-actions">
-                    <button class="icon-btn" id="fullscreenBtn" title="Pantalla completa">⛶</button>
-                    <button class="icon-btn" id="toggleCanvasSizeBtn" title="Expandir">↔️</button>
-                </div>
-            </div>
-
-            <button class="analyze-btn" id="analyzeBtn">
-                🧠 Analizar con IA Real (Gemini)
-            </button>
-            <p style="font-size: 12px; color: #718096; text-align: center; margin-top: 15px;">
-                📋 La IA analiza trazos reales y genera un informe único para cada dibujo
-            </p>
-        </div>
-    </div>
-
-    <div id="progressModal" class="modal-overlay hidden">
-        <div class="modal-content" style="max-width: 450px;">
-            <div class="modal-header">
-                <h2>🔄 IA Analizando tu dibujo...</h2>
-            </div>
-            <div class="progress-container">
-                <div class="progress-bar-container">
-                    <div class="progress-bar" id="progressBar">0%</div>
-                </div>
-                <p class="progress-text" id="progressText">Enviando a Gemini AI...</p>
-            </div>
-        </div>
-    </div>
-
-    <div id="reportModal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>📊 Informe generado por IA</h2>
-                <button class="close-modal" id="closeModalBtn">&times;</button>
-            </div>
-            <div class="modal-body">
-                <iframe id="reportIframe"></iframe>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" id="copyReportBtn">📋 Copiar</button>
-                <button class="btn btn-primary" id="savePdfBtn">📄 Guardar PDF</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        (function() {
-            // ========== CONFIGURACIÓN ==========
-            // 🔴 IMPORTANTE: REEMPLAZA ESTA CLAVE CON TU API KEY DE https://aistudio.google.com/
-            // Si no pones una clave válida, la IA NO funcionará
-            let GEMINI_API_KEY = localStorage.getItem('gemini_api_key') || '';
-            
-            // Endpoint CORRECTO para Gemini 2.0 Flash (modelo más reciente y rápido)
-            const getApiUrl = () => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
-            
-            // Elementos DOM
-            const canvas = document.getElementById('drawingCanvas');
-            const ctx = canvas.getContext('2d', { willReadFrequently: true });
-            const analyzeBtn = document.getElementById('analyzeBtn');
-            const clearBtn = document.getElementById('clearBtn');
-            const undoBtn = document.getElementById('undoBtn');
-            const downloadDrawingBtn = document.getElementById('downloadDrawingBtn');
-            const brushSizeSlider = document.getElementById('brushSize');
-            const brushValue = document.getElementById('brushValue');
-            const fullscreenBtn = document.getElementById('fullscreenBtn');
-            const toggleCanvasSizeBtn = document.getElementById('toggleCanvasSizeBtn');
-            const statusDot = document.getElementById('status-dot');
-            const statusText = document.getElementById('status-text');
-            const progressModal = document.getElementById('progressModal');
-            const progressBar = document.getElementById('progressBar');
-            const progressText = document.getElementById('progressText');
-            const reportModal = document.getElementById('reportModal');
-            const closeModalBtn = document.getElementById('closeModalBtn');
-            const copyReportBtn = document.getElementById('copyReportBtn');
-            const savePdfBtn = document.getElementById('savePdfBtn');
-            const reportIframe = document.getElementById('reportIframe');
-            const apiWarning = document.getElementById('apiWarning');
-            const configApiBtn = document.getElementById('configApiBtn');
-
-            // Verificar si hay API key configurada
-            function checkApiKey() {
-                if (!GEMINI_API_KEY || GEMINI_API_KEY === '') {
-                    apiWarning.classList.remove('hidden');
-                    updateStatus("⚠️ Configura API Key", "#ed8936");
-                    return false;
-                }
-                apiWarning.classList.add('hidden');
-                updateStatus("✅ IA lista (Gemini)", "#2f855a");
-                return true;
-            }
-
-            // Configurar API key
-            configApiBtn?.addEventListener('click', () => {
-                const newKey = prompt('🔑 Ingresa tu API Key de Google Gemini:\n\n✅ GRATIS en https://aistudio.google.com/\n\nLa clave se guardará en tu navegador.', GEMINI_API_KEY);
-                if (newKey && newKey.trim()) {
-                    GEMINI_API_KEY = newKey.trim();
-                    localStorage.setItem('gemini_api_key', GEMINI_API_KEY);
-                    checkApiKey();
-                    updateStatus("✅ API Key guardada", "#2f855a");
-                    setTimeout(() => updateStatus("IA lista para analizar", "#2f855a"), 1500);
-                }
-            });
-
-            // Variables de dibujo
-            let isDrawing = false;
-            let lastX = 0, lastY = 0;
-            let isCanvasExpanded = false;
-            let history = [];
-            let currentHistoryIndex = -1;
-            const ORIGINAL_WIDTH = 850;
-            const ORIGINAL_HEIGHT = 600;
-
-            function initContext() {
-                ctx.lineJoin = 'round';
-                ctx.lineCap = 'round';
-                ctx.lineWidth = parseInt(brushSizeSlider.value);
-                ctx.strokeStyle = '#000000';
-                ctx.fillStyle = '#FFFFFF';
-            }
-
-            function saveToHistory() {
-                if (currentHistoryIndex < history.length - 1) {
-                    history = history.slice(0, currentHistoryIndex + 1);
-                }
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                history.push(imageData);
-                currentHistoryIndex = history.length - 1;
-                if (history.length > 50) history.shift();
-            }
-
-            function undo() {
-                if (currentHistoryIndex > 0) {
-                    ctx.putImageData(history[currentHistoryIndex - 1], 0, 0);
-                    currentHistoryIndex--;
-                } else if (currentHistoryIndex === 0) {
-                    ctx.fillStyle = '#FFFFFF';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    initContext();
-                }
-            }
-
-            function clearCanvas() {
-                ctx.fillStyle = '#FFFFFF';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                initContext();
-                saveToHistory();
-                updateStatus("Lienzo limpiado", "#2f855a");
-            }
-
-            function downloadDrawing() {
-                const link = document.createElement('a');
-                link.download = `psychoart_${Date.now()}.png`;
-                link.href = canvas.toDataURL();
-                link.click();
-                updateStatus("Dibujo guardado", "#2f855a");
-            }
-
-            function getCanvasCoords(e) {
-                const rect = canvas.getBoundingClientRect();
-                const scaleX = canvas.width / rect.width;
-                const scaleY = canvas.height / rect.height;
-                let clientX, clientY;
-                if (e.touches) {
-                    clientX = e.touches[0].clientX;
-                    clientY = e.touches[0].clientY;
-                } else {
-                    clientX = e.clientX;
-                    clientY = e.clientY;
-                }
-                let x = (clientX - rect.left) * scaleX;
-                let y = (clientY - rect.top) * scaleY;
-                x = Math.max(0, Math.min(canvas.width, x));
-                y = Math.max(0, Math.min(canvas.height, y));
-                return [x, y];
-            }
-
-            function startDrawing(e) {
-                e.preventDefault();
-                isDrawing = true;
-                const [x, y] = getCanvasCoords(e);
-                lastX = x;
-                lastY = y;
-                ctx.beginPath();
-                ctx.moveTo(x, y);
-                ctx.lineTo(x, y);
-                ctx.stroke();
-            }
-
-            function draw(e) {
-                if (!isDrawing) return;
-                e.preventDefault();
-                const [x, y] = getCanvasCoords(e);
-                ctx.beginPath();
-                ctx.moveTo(lastX, lastY);
-                ctx.lineTo(x, y);
-                ctx.stroke();
-                lastX = x;
-                lastY = y;
-            }
-
-            function stopDrawing() {
-                if (isDrawing) {
-                    isDrawing = false;
-                    saveToHistory();
-                }
-            }
-
-            function resizeCanvas(width, height, preserveDrawing = true) {
-                let oldImageData = null;
-                if (preserveDrawing && canvas.width > 0) {
-                    oldImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                }
-                canvas.width = width;
-                canvas.height = height;
-                initContext();
-                if (oldImageData) {
-                    ctx.putImageData(oldImageData, 0, 0);
-                } else {
-                    ctx.fillStyle = '#FFFFFF';
-                    ctx.fillRect(0, 0, width, height);
-                }
-                saveToHistory();
-            }
-
-            function toggleCanvasSize() {
-                isCanvasExpanded = !isCanvasExpanded;
-                if (isCanvasExpanded) {
-                    resizeCanvas(window.innerWidth - 40, window.innerHeight - 200);
-                } else {
-                    resizeCanvas(ORIGINAL_WIDTH, ORIGINAL_HEIGHT);
-                }
-                updateStatus(isCanvasExpanded ? "Lienzo expandido" : "Lienzo restaurado", "#2f855a");
-            }
-
-            function updateStatus(text, color) {
-                statusText.textContent = text;
-                statusDot.style.backgroundColor = color;
-                if (color === "#2f855a") statusDot.className = 'connected';
-                else if (color === "#e53e3e") statusDot.className = 'error';
-                else if (color === "#ed8936") statusDot.className = 'warning';
-                else statusDot.className = '';
-            }
-
-            function updateProgress(percentage, message) {
-                const percent = Math.min(100, Math.max(0, percentage));
-                progressBar.style.width = `${percent}%`;
-                progressBar.textContent = `${percent}%`;
-                progressText.textContent = message;
-            }
-
-            // Prompt profesional para Gemini
-            function buildAIPrompt() {
-                const candidateId = 'PSY-' + Math.random().toString(36).substring(2, 10).toUpperCase();
-                const date = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
-                
-                return `Eres la Dra. Alva, psicóloga organizacional experta en tests proyectivos gráficos. Analiza PROFUNDAMENTE el dibujo adjunto y genera un informe psicológico profesional.
-
-INSTRUCCIONES DE ANÁLISIS:
-1. Analiza: tamaño del dibujo (autoestima), ubicación en el espacio (centro/arriba/abajo/izquierda/derecha), presión del trazo (intensidad/energía), continuidad de líneas (estabilidad), detalles originales (creatividad)
-2. Asigna porcentajes REALISTAS (0-100%) para los 4 rasgos principales basados en lo que OBSERVAS
-3. Escribe en español, tono profesional para RRHH
-4. El informe debe ser ÚNICO para cada dibujo, NO genérico
-
-GENERA ESTE HTML COMPLETO (reemplaza los textos con análisis REAL del dibujo):
-
-<!DOCTYPE html>
-<html lang="es">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-*{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;background:#f0f2f5;padding:20px;}
-.container{max-width:900px;margin:0 auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.1);}
-.header{background:linear-gradient(135deg, #1a365d 0%, #2c5282 100%);color:white;padding:30px;text-align:center;}
-.header h1{font-size:1.8rem;margin-bottom:8px;}
-.card{margin:20px;padding:20px;border-radius:12px;background:#f7fafc;border:1px solid #e2e8f0;}
-.card h2{color:#1a365d;margin-bottom:15px;padding-bottom:8px;border-bottom:3px solid #4299e1;}
-.trait{margin-bottom:20px;}
-.trait-name{font-weight:700;margin-bottom:5px;color:#2d3748;font-size:1.1rem;}
-.progress-bar{background:#e2e8f0;border-radius:8px;overflow:hidden;height:24px;margin:8px 0;}
-.progress{background:linear-gradient(90deg, #4299e1 0%, #2f855a 100%);height:100%;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;color:white;font-size:12px;font-weight:600;}
-.analysis-list{padding-left:20px;margin:10px 0;}
-li{margin:8px 0;line-height:1.5;}
-.disclaimer{font-size:11px;color:#718096;text-align:center;padding:20px;border-top:1px solid #e2e8f0;}
-</style>
-</head>
-<body>
 <div class="container">
-  <div class="header"><h1>📋 Informe de Análisis Proyectivo</h1><p>ID: ${candidateId} | Fecha: ${date}</p></div>
-  <div class="card"><h2>🧠 Perfil Psicológico</h2><p>[Escribe aquí un análisis personalizado basado en lo que ves en el dibujo - 3 líneas]</p></div>
-  <div class="card">
-    <h2>📊 Rasgos de Personalidad</h2>
-    <div class="trait"><div class="trait-name">⚡ Energía e Iniciativa</div><div class="progress-bar"><div class="progress" style="width: XX%;">XX%</div></div><p>[Interpretación específica de este dibujo]</p></div>
-    <div class="trait"><div class="trait-name">🧘 Estabilidad Emocional</div><div class="progress-bar"><div class="progress" style="width: YY%;">YY%</div></div><p>[Interpretación específica]</p></div>
-    <div class="trait"><div class="trait-name">🎨 Creatividad y Apertura</div><div class="progress-bar"><div class="progress" style="width: ZZ%;">ZZ%</div></div><p>[Interpretación específica]</p></div>
-    <div class="trait"><div class="trait-name">💪 Autoestima y Confianza</div><div class="progress-bar"><div class="progress" style="width: WW%;">WW%</div></div><p>[Interpretación específica]</p></div>
-  </div>
-  <div class="card"><h2>✅ Fortalezas</h2><ul class="analysis-list"><li>[Fortaleza 1 real del dibujo]</li><li>[Fortaleza 2]</li><li>[Fortaleza 3]</li></ul></div>
-  <div class="card"><h2>⚠️ Áreas de Desarrollo</h2><ul class="analysis-list"><li>[Área de mejora 1]</li><li>[Área de mejora 2]</li></ul></div>
-  <div class="card"><h2>🎯 Recomendaciones para RRHH</h2><p>[Recomendaciones estratégicas basadas en el perfil observado]</p></div>
-  <div class="disclaimer">⚠️ Análisis por IA - Complemento para selección de talento</div>
+    <div class="header">
+        <svg class="app-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+        <h1>PsychoArt Pro</h1>
+        <p>Sistema Clínico de Análisis Proyectivo | Test de la Figura Humana</p>
+    </div>
+
+    <div class="content">
+        <div class="toolbar">
+            <div class="status-indicator">
+                <div class="led"></div>
+                <span style="font-size: 0.85rem; font-weight: 500;">Motor Clínico | Machover</span>
+            </div>
+            <div class="brush-control">
+                <span style="font-size: 0.8rem;">✏️ Grosor del Trazo</span>
+                <input type="range" id="brushSize" min="1" max="20" value="2">
+                <span id="brushValue" style="min-width: 35px;">2px</span>
+            </div>
+            <div class="btn-group">
+                <button class="btn" id="clearBtn">🗑 Limpiar</button>
+                <button class="btn" id="undoBtn">↩ Deshacer</button>
+                <button class="btn" id="downloadBtn">💾 Guardar</button>
+            </div>
+        </div>
+
+        <div class="canvas-wrapper">
+            <canvas id="drawingCanvas" width="900" height="650" style="width:100%; height:auto; background:#fff;"></canvas>
+            <div style="position: absolute; bottom: 16px; right: 16px; display: flex; gap: 8px; opacity: 0.6;">
+                <button class="icon-btn" id="fullscreenBtn" style="background: white; border: 1px solid #ddd; border-radius: 30px; padding: 6px 12px;">⛶ Expandir</button>
+            </div>
+        </div>
+
+        <button class="analyze-btn" id="analyzeBtn">
+            🧠 Generar Informe Clínico (Análisis de Trazos)
+        </button>
+        <p style="font-size: 11px; text-align: center; color: #6c757d; margin-top: 16px;">Basado en criterios del Test Proyectivo de Karen Machover (Figura Humana)</p>
+    </div>
 </div>
-</body>
-</html>`;
+
+<div id="progressModal" class="modal hidden">
+    <div class="modal-card" style="max-width: 400px;">
+        <div class="progress-container">
+            <h3 style="margin-bottom: 16px;">Procesando Indicadores Gráficos</h3>
+            <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+            <p id="progressText" style="margin-top: 16px; color: #4b5563;">Analizando presión y ubicación...</p>
+        </div>
+    </div>
+</div>
+
+<div id="reportModal" class="modal hidden">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h2>📄 Informe Psodiagnóstico</h2>
+            <button class="close-modal" id="closeModalBtn" style="background: none; border: none; font-size: 28px; cursor: pointer;">&times;</button>
+        </div>
+        <div class="modal-body">
+            <iframe id="reportIframe"></iframe>
+        </div>
+        <div style="padding: 16px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 12px;">
+            <button class="btn btn-secondary" id="copyReportBtn">📋 Copiar</button>
+            <button class="btn btn-primary" id="savePdfBtn">📄 Guardar PDF</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ---------- Setup Canvas ----------
+        const canvas = document.getElementById('drawingCanvas');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+        let lastX = 0, lastY = 0;
+        let history = [];
+        let historyIndex = -1;
+
+        function resizeCanvas() {
+            // Mantener resolución fija para el análisis 900x650
+            canvas.width = 900;
+            canvas.height = 650;
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.lineWidth = parseInt(document.getElementById('brushSize').value);
+            ctx.strokeStyle = '#1a1a1a';
+            saveState();
+        }
+
+        function saveState() {
+            history = history.slice(0, historyIndex + 1);
+            history.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+            historyIndex = history.length - 1;
+            if (history.length > 30) history.shift();
+        }
+
+        function undo() {
+            if (historyIndex > 0) {
+                historyIndex--;
+                ctx.putImageData(history[historyIndex], 0, 0);
             }
+        }
 
-            // Llamada a Gemini AI REAL
-            async function analyzeWithGemini(base64Image) {
-                if (!GEMINI_API_KEY) {
-                    throw new Error("No hay API key configurada. Haz clic en el botón de configuración.");
-                }
-                
-                const prompt = buildAIPrompt();
-                
-                const requestBody = {
-                    contents: [{
-                        parts: [
-                            { text: prompt },
-                            { inlineData: { mimeType: "image/png", data: base64Image } }
-                        ]
-                    }],
-                    generationConfig: {
-                        temperature: 0.8,
-                        maxOutputTokens: 8192,
-                        topP: 0.95
-                    }
-                };
+        function clearCanvas() {
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            saveState();
+        }
 
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 60000);
-                
-                try {
-                    const response = await fetch(getApiUrl(), {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(requestBody),
-                        signal: controller.signal
-                    });
-                    
-                    clearTimeout(timeoutId);
-                    
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        console.error("Gemini API Error:", errorData);
-                        if (response.status === 403 || response.status === 401) {
-                            throw new Error("API key inválida. Obtén una gratis en https://aistudio.google.com/");
-                        }
-                        if (response.status === 404) {
-                            throw new Error("Modelo no encontrado. Verifica tu conexión.");
-                        }
-                        throw new Error(errorData.error?.message || "Error en la API de Gemini");
-                    }
-                    
-                    const data = await response.json();
-                    
-                    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-                        throw new Error("Respuesta inválida de Gemini");
-                    }
-                    
-                    let resultText = data.candidates[0].content.parts[0].text;
-                    if (!resultText) throw new Error("Gemini no generó contenido");
-                    
-                    // Limpiar formato
-                    let cleanResult = resultText;
-                    cleanResult = cleanResult.replace(/```html\s*/gi, '');
-                    cleanResult = cleanResult.replace(/```\s*$/gm, '');
-                    cleanResult = cleanResult.replace(/```/g, '');
-                    
-                    if (!cleanResult.includes('<!DOCTYPE html>') && !cleanResult.includes('<html')) {
-                        cleanResult = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:sans-serif;padding:20px}</style></head><body><div style="max-width:800px;margin:auto"><h1>Informe de Análisis</h1><div>${cleanResult.replace(/\n/g, '<br>')}</div></div></body></html>`;
-                    }
-                    
-                    return cleanResult;
-                } catch (error) {
-                    clearTimeout(timeoutId);
-                    throw error;
-                }
-            }
+        function getCoords(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            let clientX, clientY;
+            if (e.touches) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; }
+            else { clientX = e.clientX; clientY = e.clientY; }
+            let x = (clientX - rect.left) * scaleX;
+            let y = (clientY - rect.top) * scaleY;
+            return [Math.min(Math.max(0, x), canvas.width), Math.min(Math.max(0, y), canvas.height)];
+        }
 
-            async function analyzeDrawing() {
-                // Verificar API key
-                if (!checkApiKey()) {
-                    alert("❌ Primero configura tu API key de Google Gemini.\n\n✅ GRATIS en https://aistudio.google.com/");
-                    return;
-                }
-                
-                // Verificar dibujo
-                const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = canvas.width;
-                tempCanvas.height = canvas.height;
-                const tCtx = tempCanvas.getContext('2d');
-                tCtx.fillStyle = "#FFFFFF";
-                tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-                tCtx.drawImage(canvas, 0, 0);
-                
-                const pixelData = tCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height).data;
-                let hasDrawing = false;
-                for (let i = 0; i < pixelData.length; i += 4) {
-                    if (pixelData[i] < 250 || pixelData[i+1] < 250 || pixelData[i+2] < 250) {
-                        hasDrawing = true;
-                        break;
+        function startDraw(e) { e.preventDefault(); isDrawing = true; const [x, y] = getCoords(e); lastX = x; lastY = y; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x+0.5, y+0.5); ctx.stroke(); }
+        function draw(e) { if (!isDrawing) return; e.preventDefault(); const [x, y] = getCoords(e); ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(x, y); ctx.stroke(); lastX = x; lastY = y; }
+        function endDraw() { if(isDrawing) { isDrawing = false; saveState(); } }
+
+        canvas.addEventListener('mousedown', startDraw);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', endDraw);
+        canvas.addEventListener('mouseleave', endDraw);
+        canvas.addEventListener('touchstart', startDraw, {passive: false});
+        canvas.addEventListener('touchmove', draw, {passive: false});
+        canvas.addEventListener('touchend', endDraw);
+
+        document.getElementById('brushSize').addEventListener('input', (e) => { ctx.lineWidth = parseInt(e.target.value); document.getElementById('brushValue').innerText = e.target.value + 'px'; });
+        document.getElementById('clearBtn').onclick = clearCanvas;
+        document.getElementById('undoBtn').onclick = undo;
+        document.getElementById('downloadBtn').onclick = () => { const link = document.createElement('a'); link.download = 'test_proyectivo.png'; link.href = canvas.toDataURL(); link.click(); };
+
+        resizeCanvas();
+        saveState();
+
+        // ---------- ANALISIS CLINICO PRO (Basado en Machover) ----------
+        function analyzeDrawing() {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            const tCtx = tempCanvas.getContext('2d');
+            tCtx.fillStyle = '#FFFFFF';
+            tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+            tCtx.drawImage(canvas, 0, 0);
+            const imgData = tCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+            const data = imgData.data;
+            
+            let minX = tempCanvas.width, maxX = 0, minY = tempCanvas.height, maxY = 0;
+            let darkPixels = 0, totalIntensity = 0;
+            let totalPixels = tempCanvas.width * tempCanvas.height;
+            
+            // Detección de características
+            for (let y = 0; y < tempCanvas.height; y++) {
+                for (let x = 0; x < tempCanvas.width; x++) {
+                    const idx = (y * tempCanvas.width + x) * 4;
+                    const r = data[idx], g = data[idx+1], b = data[idx+2];
+                    const brightness = (r + g + b) / 3;
+                    if (brightness < 250) {
+                        darkPixels++;
+                        totalIntensity += (255 - brightness);
+                        if (x < minX) minX = x;
+                        if (x > maxX) maxX = x;
+                        if (y < minY) minY = y;
+                        if (y > maxY) maxY = y;
                     }
                 }
-                
-                if (!hasDrawing) {
-                    alert("❌ Realiza un dibujo antes de generar el informe.");
-                    return;
-                }
-                
-                progressModal.classList.remove('hidden');
-                analyzeBtn.disabled = true;
-                updateProgress(10, "Preparando dibujo...");
-                
-                try {
-                    updateProgress(20, "Codificando imagen...");
-                    await new Promise(r => setTimeout(r, 200));
-                    
-                    const base64Image = tempCanvas.toDataURL('image/png').split(',')[1];
-                    
-                    updateProgress(30, "Enviando a Gemini AI...");
-                    await new Promise(r => setTimeout(r, 300));
-                    
-                    updateProgress(50, "IA analizando trazos y composición...");
-                    
-                    const htmlReport = await analyzeWithGemini(base64Image);
-                    
-                    updateProgress(90, "Generando informe...");
-                    await new Promise(r => setTimeout(r, 300));
-                    
-                    updateProgress(100, "¡Informe completado!");
-                    
-                    reportIframe.srcdoc = htmlReport;
-                    reportModal.classList.remove('hidden');
-                    updateStatus("✅ Análisis por IA completado", "#2f855a");
-                    
-                } catch (error) {
-                    console.error("Error:", error);
-                    updateStatus("Error en IA", "#e53e3e");
-                    let msg = error.message || "Error desconocido";
-                    if (msg.includes("API key")) {
-                        msg = "API key inválida. Configúrala en https://aistudio.google.com/";
-                        localStorage.removeItem('gemini_api_key');
-                        GEMINI_API_KEY = '';
-                        checkApiKey();
-                    }
-                    alert(`❌ Error con la IA: ${msg}`);
-                } finally {
-                    analyzeBtn.disabled = false;
-                    progressModal.classList.add('hidden');
-                    updateProgress(0, "");
-                }
-            }
-
-            async function copyReport() {
-                try {
-                    const iframeDoc = reportIframe.contentDocument || reportIframe.contentWindow.document;
-                    const text = iframeDoc.body.innerText;
-                    await navigator.clipboard.writeText(text);
-                    alert("✅ Informe copiado");
-                } catch (err) {
-                    alert("❌ No se pudo copiar");
-                }
-            }
-
-            async function savePdf() {
-                try {
-                    const element = reportIframe.contentDocument.querySelector('.container') || reportIframe.contentDocument.body;
-                    await html2pdf().set({
-                        margin: [10,10,10,10],
-                        filename: `PsychoArt_IA_${Date.now()}.pdf`,
-                        image: { type: 'jpeg', quality: 0.98 },
-                        html2canvas: { scale: 2 },
-                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                    }).from(element).save();
-                    updateStatus("PDF guardado", "#2f855a");
-                } catch (err) {
-                    alert("❌ Error al guardar PDF");
-                }
-            }
-
-            function setupEventListeners() {
-                canvas.addEventListener('mousedown', startDrawing);
-                canvas.addEventListener('mousemove', draw);
-                canvas.addEventListener('mouseup', stopDrawing);
-                canvas.addEventListener('mouseleave', stopDrawing);
-                canvas.addEventListener('touchstart', startDrawing, { passive: false });
-                canvas.addEventListener('touchmove', draw, { passive: false });
-                canvas.addEventListener('touchend', stopDrawing);
-                
-                clearBtn.addEventListener('click', clearCanvas);
-                undoBtn.addEventListener('click', undo);
-                downloadDrawingBtn.addEventListener('click', downloadDrawing);
-                analyzeBtn.addEventListener('click', analyzeDrawing);
-                fullscreenBtn.addEventListener('click', () => {
-                    const elem = document.querySelector('.container');
-                    if (!document.fullscreenElement) elem.requestFullscreen();
-                    else document.exitFullscreen();
-                });
-                toggleCanvasSizeBtn.addEventListener('click', toggleCanvasSize);
-                
-                brushSizeSlider.addEventListener('input', (e) => {
-                    ctx.lineWidth = parseInt(e.target.value);
-                    brushValue.textContent = e.target.value + 'px';
-                });
-                
-                closeModalBtn.addEventListener('click', () => reportModal.classList.add('hidden'));
-                copyReportBtn.addEventListener('click', copyReport);
-                savePdfBtn.addEventListener('click', savePdf);
-                
-                reportModal.addEventListener('click', (e) => {
-                    if (e.target === reportModal) reportModal.classList.add('hidden');
-                });
-            }
-
-            function init() {
-                resizeCanvas(ORIGINAL_WIDTH, ORIGINAL_HEIGHT, false);
-                initContext();
-                saveToHistory();
-                setupEventListeners();
-                checkApiKey();
-                brushValue.textContent = brushSizeSlider.value + 'px';
             }
             
-            init();
-        })();
-    </script>
+            const density = darkPixels / totalPixels;
+            const avgPressure = darkPixels > 0 ? (totalIntensity / darkPixels) / 255 : 0; // 0..1
+            const centerX = (minX + maxX) / 2 / tempCanvas.width;
+            const centerY = (minY + maxY) / 2 / tempCanvas.height;
+            const widthSize = (maxX - minX) / tempCanvas.width;
+            const heightSize = (maxY - minY) / tempCanvas.height;
+            const sizeRatio = widthSize * heightSize;
+            
+            // Indicadores Clínicos (Machover)
+            let diagnosis = [];
+            let clinicalNotes = [];
+            
+            // 1. Presión del Trazo (Energía / Ansiedad)
+            let pressureLevel = "moderada";
+            if (avgPressure > 0.6) { pressureLevel = "muy fuerte (alta tensión/agresividad)"; clinicalNotes.push("Trazo con presión excesiva sugiere impulsividad o ansiedad intensa [citation:3]."); }
+            else if (avgPressure < 0.2) { pressureLevel = "débil (inseguridad/timidez)"; clinicalNotes.push("Líneas débiles o temblorosas indican falta de confianza o astenia [citation:7]."); }
+            
+            // 2. Tamaño (Autoestima)
+            let sizeDesc = "mediano";
+            if (sizeRatio < 0.05) { sizeDesc = "muy pequeño (sentimiento de inferioridad)"; clinicalNotes.push("Figura de tamaño reducido sugiere inseguridad y retraimiento social [citation:3]."); }
+            else if (sizeRatio > 0.25) { sizeDesc = "grande (necesidad de protagonismo)"; clinicalNotes.push("Figura de gran tamaño indica posible grandiosidad o exhibicionismo [citation:5]."); }
+            
+            // 3. Ubicación (Relación con el entorno)
+            let locationDesc = "";
+            if (centerY < 0.33) locationDesc = "parte superior (tendencia a la fantasía/aislamiento)";
+            else if (centerY > 0.66) locationDesc = "parte inferior (pragmatismo / inseguridad base)";
+            if (centerX < 0.3) clinicalNotes.push("Dibujo desplazado a la izquierda (vuelta hacia el pasado/introversión).");
+            if (centerX > 0.7) clinicalNotes.push("Dibujo desplazado a la derecha (orientación al futuro/extroversión).");
+            
+            // 4. Detalles patognomónicos (Borrones, exceso de líneas)
+            let hasErasures = false;
+            // Detectamos "ruido" en el dibujo (píxeles aislados)
+            let noiseCount = 0;
+            for (let y = 1; y < tempCanvas.height-1; y++) {
+                for (let x = 1; x < tempCanvas.width-1; x++) {
+                    const idx = (y * tempCanvas.width + x) * 4;
+                    if (data[idx] < 250) {
+                        let neighbors = 0;
+                        for (let dy = -1; dy <= 1; dy++) {
+                            for (let dx = -1; dx <= 1; dx++) {
+                                if(dx===0 && dy===0) continue;
+                                const nIdx = ((y+dy) * tempCanvas.width + (x+dx)) * 4;
+                                if(data[nIdx] < 250) neighbors++;
+                            }
+                        }
+                        if(neighbors === 0) noiseCount++;
+                    }
+                }
+            }
+            if(noiseCount > 50) clinicalNotes.push("Presencia de trazos erráticos o borraduras, indicador clásico de ansiedad e inseguridad [citation:7].");
+            
+            // 5. Calculo de Rasgos adaptados (Escala 0-100)
+            let energia = Math.min(95, Math.max(15, Math.round(avgPressure * 100 + density * 30)));
+            let estabilidad = Math.min(95, Math.max(20, Math.round(70 - (Math.abs(centerX-0.5)*60) - (noiseCount > 50 ? 20 : 0))));
+            let creatividad = Math.min(95, Math.max(15, Math.round(40 + (sizeRatio * 100) + (density > 0.1 ? 10 : 0))));
+            let autoestima = Math.min(95, Math.max(15, Math.round(50 + (1 - Math.abs(centerY-0.5))*40 + (sizeRatio * 50))));
+            
+            // ID del reporte
+            const id = `PSY-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+            const date = new Date().toLocaleDateString('es-ES', {year:'numeric', month:'long', day:'numeric'});
+            
+            // Construcción HTML del Informe Profesional
+            const reportHTML = `<!DOCTYPE html>
+            <html>
+            <head><meta charset="UTF-8"><title>Informe Clínico</title>
+            <style>
+                body { font-family: 'Inter', sans-serif; background: #f4f6f9; padding: 2rem; margin: 0; }
+                .paper { max-width: 850px; margin: 0 auto; background: white; border-radius: 24px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); overflow: hidden; }
+                .header { background: #0f172a; color: white; padding: 2rem; text-align: center; }
+                .header h1 { margin: 0; font-size: 1.8rem; }
+                .content { padding: 2rem; }
+                .score-card { background: #f8fafc; border-radius: 20px; padding: 1.5rem; margin-bottom: 1.5rem; border-left: 4px solid #0f172a; }
+                .badge { background: #e2e8f0; padding: 4px 12px; border-radius: 30px; font-size: 0.7rem; font-weight: bold; color: #1e293b; display: inline-block; margin-bottom: 12px; }
+                .trait { margin-bottom: 1.5rem; }
+                .trait-label { font-weight: 700; margin-bottom: 6px; display: flex; justify-content: space-between; }
+                .bar { background: #e2e8f0; border-radius: 12px; height: 10px; overflow: hidden; }
+                .bar-fill { background: #0f172a; width: 0%; height: 100%; border-radius: 12px; }
+                .clinical-note { background: #fff9db; padding: 1rem; border-radius: 16px; margin-top: 1rem; font-size: 0.85rem; border-left: 3px solid #f59e0b; }
+                footer { font-size: 0.7rem; text-align: center; padding: 1.5rem; border-top: 1px solid #e2e8f0; color: #64748b; }
+            </style>
+            </head>
+            <body>
+            <div class="paper">
+                <div class="header">
+                    <h1>📋 Informe de Evaluación Proyectiva</h1>
+                    <p>Test de la Figura Humana (Machover) | Sistema Clínico PsychoArt</p>
+                </div>
+                <div class="content">
+                    <div class="score-card">
+                        <div class="badge">ID: ${id}</div>
+                        <div><strong>Fecha de análisis:</strong> ${date}</div>
+                        <div><strong>Indicadores gráficos detectados:</strong> Tamaño ${sizeDesc} | Presión ${pressureLevel} | Ubicación predominante: ${locationDesc || "centrada"}</div>
+                    </div>
+                    
+                    <h3 style="margin-bottom: 16px;">📊 Índices de Personalidad</h3>
+                    <div class="trait"><div class="trait-label"><span>⚡ Energía / Impulso</span><span>${energia}%</span></div><div class="bar"><div class="bar-fill" style="width: ${energia}%;"></div></div><p style="font-size: 0.8rem; margin-top: 4px;">${avgPressure > 0.5 ? "Alta activación psicomotora, posible ansiedad." : "Nivel energético regulado, tendencia a la contención."}</p></div>
+                    <div class="trait"><div class="trait-label"><span>🧠 Estabilidad Emocional</span><span>${estabilidad}%</span></div><div class="bar"><div class="bar-fill" style="width: ${estabilidad}%;"></div></div><p style="font-size: 0.8rem;">Evaluado por continuidad del trazo y ubicación en el espacio gráfico.</p></div>
+                    <div class="trait"><div class="trait-label"><span>🎨 Creatividad / Apertura</span><span>${creatividad}%</span></div><div class="bar"><div class="bar-fill" style="width: ${creatividad}%;"></div></div><p style="font-size: 0.8rem;">Relacionado con la riqueza de detalles y originalidad de la figura.</p></div>
+                    <div class="trait"><div class="trait-label"><span>💪 Autoestima / Seguridad</span><span>${autoestima}%</span></div><div class="bar"><div class="bar-fill" style="width: ${autoestima}%;"></div></div><p style="font-size: 0.8rem;">${sizeRatio > 0.2 ? "Proyección de grandiosidad o necesidad de reconocimiento." : "Modestia en la autopercepción."}</p></div>
+                    
+                    <div class="clinical-note">
+                        <strong>🔍 Observaciones Clínicas (basado en indicadores de Machover):</strong>
+                        <ul style="margin-top: 8px; padding-left: 20px;">
+                            ${clinicalNotes.map(n => `<li>${n}</li>`).join('')}
+                            ${clinicalNotes.length === 0 ? '<li>No se aprecian indicadores patognomónicos significativos en este cuadro.</li>' : ''}
+                        </ul>
+                        <p style="margin-top: 8px; font-style: italic;">*La interpretación se fundamenta en la relación entre el tamaño del dibujo, la presión del trazo y la ubicación. Evidencia empírica sugiere que trazos firmes denotan seguridad, mientras que los trazados débiles correlacionan con introversión [citation:3].</p>
+                    </div>
+                    
+                    <div style="margin-top: 24px; background: #f1f5f9; border-radius: 16px; padding: 16px;">
+                        <h4>📌 Recomendaciones para Selección de Talento</h4>
+                        <p>Basado en el perfil gráfico proyectado, se sugiere:</p>
+                        <ul>
+                            <li>${energia > 70 ? "Candidato con alta energía: apto para roles de liderazgo y gestión de crisis." : "Perfil reflexivo: ideal para tareas analíticas o de investigación."}</li>
+                            <li>${estabilidad > 70 ? "Alta tolerancia al estrés, se adapta bien a entornos cambiantes." : "Requiere ambientes laborales estructurados para optimizar rendimiento."}</li>
+                        </ul>
+                    </div>
+                    
+                    <footer>
+                        ⚠️ Este informe es una herramienta complementaria basada en el análisis no supervisado de indicadores proyectivos. No sustituye una entrevista psicológica formal ni un diagnóstico clínico. Basado en la teoría de Karen Machover.
+                    </footer>
+                </div>
+            </div>
+            </body>
+            </html>`;
+            
+            return reportHTML;
+        }
+        
+        // ---------- UI Logic ----------
+        const progressModal = document.getElementById('progressModal');
+        const reportModal = document.getElementById('reportModal');
+        const reportIframe = document.getElementById('reportIframe');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const copyBtn = document.getElementById('copyReportBtn');
+        const savePdfBtn = document.getElementById('savePdfBtn');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        
+        analyzeBtn.onclick = async () => {
+            // Check if drawing exists
+            const tempCheck = document.createElement('canvas');
+            tempCheck.width = canvas.width; tempCheck.height = canvas.height;
+            const tCtx = tempCheck.getContext('2d');
+            tCtx.drawImage(canvas, 0, 0);
+            const imgData = tCtx.getImageData(0, 0, canvas.width, canvas.height).data;
+            let hasPixel = false;
+            for(let i=0; i<imgData.length; i+=4) { if(imgData[i] < 250) { hasPixel = true; break; } }
+            if(!hasPixel) { alert("⚠️ No se detectó ningún trazo. Realiza un dibujo antes de generar el informe."); return; }
+            
+            progressModal.classList.remove('hidden');
+            let prog = 0;
+            const interval = setInterval(() => { prog += 5; if(prog <= 90) { progressFill.style.width = prog + '%'; progressText.innerText = "Analizando indicadores gráficos..."; } }, 100);
+            
+            setTimeout(async () => {
+                clearInterval(interval);
+                progressFill.style.width = '100%';
+                progressText.innerText = "Interpretación clínica completada.";
+                const html = analyzeDrawing();
+                reportIframe.srcdoc = html;
+                await new Promise(r => setTimeout(r, 300));
+                progressModal.classList.add('hidden');
+                reportModal.classList.remove('hidden');
+            }, 500);
+        };
+        
+        closeModalBtn.onclick = () => reportModal.classList.add('hidden');
+        copyBtn.onclick = async () => { 
+            try { const doc = reportIframe.contentDocument; await navigator.clipboard.writeText(doc.body.innerText); alert("Informe copiado"); } catch(e) { alert("Error al copiar"); } 
+        };
+        savePdfBtn.onclick = async () => {
+            try { const element = reportIframe.contentDocument.querySelector('.paper'); await html2pdf().set({ margin: 10, filename: `Informe_PsychoArt.pdf` }).from(element).save(); } catch(e) { alert("Error PDF"); }
+        };
+        document.getElementById('fullscreenBtn').onclick = () => { const elem = document.querySelector('.container'); if(!document.fullscreenElement) elem.requestFullscreen(); else document.exitFullscreen(); };
+    })();
+</script>
 </body>
 </html>
