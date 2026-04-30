@@ -3,431 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>PsychoArt Analytics | Test Proyectivo</title>
+    <title>PsychoArt Analytics | IA Real Gemini</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        * {
-            box-sizing: border-box;
-            user-select: none;
-        }
-
-        :root {
-            --primary: #1a365d;
-            --primary-light: #2c5282;
-            --secondary: #4a5568;
-            --accent: #e53e3e;
-            --success: #2f855a;
-            --warning: #ed8936;
-            --bg-light: #f7fafc;
-            --border: #e2e8f0;
-        }
-
-        html, body {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 24px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .header {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-
-        .app-logo {
-            width: 70px;
-            height: auto;
-            margin-bottom: 15px;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
-        }
-
-        .header h1 {
-            margin: 0;
-            font-size: 1.8rem;
-            font-weight: 700;
-        }
-
-        .header p {
-            margin: 10px 0 0;
-            opacity: 0.9;
-            font-size: 0.95rem;
-        }
-
-        .content {
-            padding: 30px;
-        }
-
-        .status-card {
-            background: var(--bg-light);
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 25px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 15px;
-            border: 1px solid var(--border);
-        }
-
-        .status-indicator {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        #status-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background-color: #cbd5e0;
-            transition: background-color 0.3s;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        #status-dot.connected {
-            background-color: var(--success);
-            box-shadow: 0 0 8px var(--success);
-        }
-
-        #status-dot.error {
-            background-color: var(--accent);
-        }
-
-        #status-dot.warning {
-            background-color: var(--warning);
-        }
-
-        #status-text {
-            font-weight: 500;
-            color: var(--secondary);
-        }
-
-        .brush-control {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            background: white;
-            padding: 8px 15px;
-            border-radius: 40px;
-            border: 1px solid var(--border);
-        }
-
-        .brush-control label {
-            font-weight: 600;
-            color: var(--primary);
-        }
-
-        #brushSize {
-            width: 150px;
-        }
-
-        .canvas-controls {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 14px;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-light);
-            transform: translateY(-2px);
-        }
-
-        .btn-danger {
-            background: var(--accent);
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #c53030;
-        }
-
-        .btn-secondary {
-            background: var(--secondary);
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: #2d3748;
-        }
-
-        .btn-success {
-            background: var(--success);
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #22543d;
-        }
-
-        .canvas-container {
-            position: relative;
-            background: white;
-            border: 2px solid var(--border);
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            margin: 20px 0;
-        }
-
-        canvas {
-            display: block;
-            width: 100%;
-            height: auto;
-            cursor: crosshair;
-            background: white;
-            touch-action: none;
-        }
-
-        .canvas-actions {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            display: flex;
-            gap: 8px;
-            z-index: 10;
-        }
-
-        .icon-btn {
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(4px);
-            border: none;
-            color: white;
-            width: 36px;
-            height: 36px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 18px;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .icon-btn:hover {
-            background: rgba(0,0,0,0.8);
-            transform: scale(1.05);
-        }
-
-        .analyze-btn {
-            width: 100%;
-            padding: 16px;
-            font-size: 18px;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--success) 0%, #38a169 100%);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-top: 20px;
-        }
-
-        .analyze-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(47, 133, 90, 0.3);
-        }
-
-        .analyze-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(4px);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            padding: 20px;
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: 20px;
-            max-width: 900px;
-            width: 100%;
-            max-height: 90vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-        }
-
-        .modal-header {
-            padding: 20px 25px;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .modal-header h2 {
-            margin: 0;
-            font-size: 1.4rem;
-        }
-
-        .close-modal {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 28px;
-            cursor: pointer;
-            padding: 0;
-            line-height: 1;
-        }
-
-        .modal-body {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-        }
-
-        .modal-body iframe {
-            width: 100%;
-            height: 600px;
-            border: none;
-        }
-
-        .modal-footer {
-            padding: 15px 20px;
-            border-top: 1px solid var(--border);
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-        }
-
-        .progress-container {
-            text-align: center;
-            padding: 30px;
-        }
-
-        .progress-bar-container {
-            background: var(--border);
-            border-radius: 50px;
-            overflow: hidden;
-            height: 30px;
-            margin: 20px 0;
-        }
-
-        .progress-bar {
-            width: 0%;
-            height: 100%;
-            background: linear-gradient(90deg, var(--success) 0%, #48bb78 100%);
-            transition: width 0.4s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-            font-size: 12px;
-        }
-
-        .progress-text {
-            color: var(--primary);
-            font-weight: 500;
-        }
-
-        .error-message {
-            background: #fed7d7;
-            border-left: 4px solid var(--accent);
-            padding: 12px;
-            margin: 10px 0;
-            border-radius: 8px;
-            color: #742a2a;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-            
-            .content {
-                padding: 20px;
-            }
-            
-            .header h1 {
-                font-size: 1.4rem;
-            }
-            
-            .status-card {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .brush-control {
-                justify-content: center;
-            }
-            
-            .modal-body iframe {
-                height: 400px;
-            }
-        }
+        /* (mismos estilos que antes - omito por brevedad pero van igual) */
+        * { box-sizing: border-box; user-select: none; }
+        :root { --primary: #1a365d; --primary-light: #2c5282; --secondary: #4a5568; --accent: #e53e3e; --success: #2f855a; --warning: #ed8936; --bg-light: #f7fafc; --border: #e2e8f0; }
+        html, body { scroll-behavior: smooth; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; margin: 0; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden; }
+        .header { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); color: white; padding: 30px; text-align: center; }
+        .app-logo { width: 70px; height: auto; margin-bottom: 15px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
+        .header h1 { margin: 0; font-size: 1.8rem; font-weight: 700; }
+        .header p { margin: 10px 0 0; opacity: 0.9; font-size: 0.95rem; }
+        .content { padding: 30px; }
+        .status-card { background: var(--bg-light); border-radius: 12px; padding: 15px; margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px; border: 1px solid var(--border); }
+        .status-indicator { display: flex; align-items: center; gap: 10px; }
+        #status-dot { width: 12px; height: 12px; border-radius: 50%; background-color: #cbd5e0; transition: background-color 0.3s; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        #status-dot.connected { background-color: var(--success); box-shadow: 0 0 8px var(--success); }
+        #status-dot.error { background-color: var(--accent); }
+        #status-dot.warning { background-color: var(--warning); }
+        #status-text { font-weight: 500; color: var(--secondary); }
+        .brush-control { display: flex; align-items: center; gap: 15px; background: white; padding: 8px 15px; border-radius: 40px; border: 1px solid var(--border); }
+        .brush-control label { font-weight: 600; color: var(--primary); }
+        #brushSize { width: 150px; }
+        .canvas-controls { display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; flex-wrap: wrap; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 14px; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-light); transform: translateY(-2px); }
+        .btn-danger { background: var(--accent); color: white; }
+        .btn-danger:hover { background: #c53030; }
+        .btn-secondary { background: var(--secondary); color: white; }
+        .btn-secondary:hover { background: #2d3748; }
+        .btn-success { background: var(--success); color: white; }
+        .canvas-container { position: relative; background: white; border: 2px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin: 20px 0; }
+        canvas { display: block; width: 100%; height: auto; cursor: crosshair; background: white; touch-action: none; }
+        .canvas-actions { position: absolute; top: 10px; right: 10px; display: flex; gap: 8px; z-index: 10; }
+        .icon-btn { background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); border: none; color: white; width: 36px; height: 36px; border-radius: 8px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+        .analyze-btn { width: 100%; padding: 16px; font-size: 18px; font-weight: 700; background: linear-gradient(135deg, var(--success) 0%, #38a169 100%); color: white; border: none; border-radius: 12px; cursor: pointer; transition: all 0.3s; margin-top: 20px; }
+        .analyze-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(47, 133, 90, 0.3); }
+        .analyze-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
+        .modal-content { background: white; border-radius: 20px; max-width: 900px; width: 100%; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+        .modal-header { padding: 20px 25px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); color: white; display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h2 { margin: 0; font-size: 1.4rem; }
+        .close-modal { background: none; border: none; color: white; font-size: 28px; cursor: pointer; }
+        .modal-body { flex: 1; overflow-y: auto; padding: 20px; }
+        .modal-body iframe { width: 100%; height: 600px; border: none; }
+        .modal-footer { padding: 15px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
+        .progress-container { text-align: center; padding: 30px; }
+        .progress-bar-container { background: var(--border); border-radius: 50px; overflow: hidden; height: 30px; margin: 20px 0; }
+        .progress-bar { width: 0%; height: 100%; background: linear-gradient(90deg, var(--success) 0%, #48bb78 100%); transition: width 0.4s ease; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 12px; }
+        .progress-text { color: var(--primary); font-weight: 500; }
+        .hidden { display: none !important; }
+        .api-key-warning { background: #fed7d7; border-left: 4px solid var(--accent); padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 13px; }
+        @media (max-width: 768px) { body { padding: 10px; } .content { padding: 20px; } .modal-body iframe { height: 400px; } }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <svg class="app-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg class="app-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.55 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/>
                 <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.55 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/>
                 <circle cx="12" cy="12" r="3"/>
             </svg>
             <h1>PsychoArt Analytics</h1>
-            <p>Test Proyectivo de Personalidad para Selección de Talento</p>
+            <p>Test Proyectivo con IA REAL de Google Gemini</p>
         </div>
 
         <div class="content">
+            <div id="apiWarning" class="api-key-warning hidden">
+                ⚠️ Configura tu API key de Google Gemini para usar IA real. 
+                <a href="#" id="configApiBtn" style="color: #1a365d; font-weight: bold;">Haz clic aquí para configurarla</a>
+            </div>
+
             <div class="status-card">
                 <div class="status-indicator">
                     <div id="status-dot"></div>
@@ -455,10 +106,10 @@
             </div>
 
             <button class="analyze-btn" id="analyzeBtn">
-                🧠 Generar Informe Psicológico
+                🧠 Analizar con IA Real (Gemini)
             </button>
             <p style="font-size: 12px; color: #718096; text-align: center; margin-top: 15px;">
-                📋 El análisis se basa en trazos, presión y composición del dibujo
+                📋 La IA analiza trazos reales y genera un informe único para cada dibujo
             </p>
         </div>
     </div>
@@ -466,16 +117,13 @@
     <div id="progressModal" class="modal-overlay hidden">
         <div class="modal-content" style="max-width: 450px;">
             <div class="modal-header">
-                <h2>🔄 Generando Informe</h2>
+                <h2>🔄 IA Analizando tu dibujo...</h2>
             </div>
             <div class="progress-container">
                 <div class="progress-bar-container">
                     <div class="progress-bar" id="progressBar">0%</div>
                 </div>
-                <p class="progress-text" id="progressText">Iniciando análisis...</p>
-                <p style="color: #718096; font-size: 13px; margin-top: 15px;">
-                    La IA está analizando el dibujo... puede tomar hasta 30 segundos
-                </p>
+                <p class="progress-text" id="progressText">Enviando a Gemini AI...</p>
             </div>
         </div>
     </div>
@@ -483,11 +131,11 @@
     <div id="reportModal" class="modal-overlay hidden">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>📊 Informe de Análisis Psicológico</h2>
+                <h2>📊 Informe generado por IA</h2>
                 <button class="close-modal" id="closeModalBtn">&times;</button>
             </div>
-            <div class="modal-body" id="modalBody">
-                <iframe id="reportIframe" srcdoc="<p>Cargando informe...</p>"></iframe>
+            <div class="modal-body">
+                <iframe id="reportIframe"></iframe>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" id="copyReportBtn">📋 Copiar</button>
@@ -498,6 +146,15 @@
 
     <script>
         (function() {
+            // ========== CONFIGURACIÓN ==========
+            // 🔴 IMPORTANTE: REEMPLAZA ESTA CLAVE CON TU API KEY DE https://aistudio.google.com/
+            // Si no pones una clave válida, la IA NO funcionará
+            let GEMINI_API_KEY = localStorage.getItem('gemini_api_key') || '';
+            
+            // Endpoint CORRECTO para Gemini 2.0 Flash (modelo más reciente y rápido)
+            const getApiUrl = () => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+            
+            // Elementos DOM
             const canvas = document.getElementById('drawingCanvas');
             const ctx = canvas.getContext('2d', { willReadFrequently: true });
             const analyzeBtn = document.getElementById('analyzeBtn');
@@ -518,7 +175,34 @@
             const copyReportBtn = document.getElementById('copyReportBtn');
             const savePdfBtn = document.getElementById('savePdfBtn');
             const reportIframe = document.getElementById('reportIframe');
+            const apiWarning = document.getElementById('apiWarning');
+            const configApiBtn = document.getElementById('configApiBtn');
 
+            // Verificar si hay API key configurada
+            function checkApiKey() {
+                if (!GEMINI_API_KEY || GEMINI_API_KEY === '') {
+                    apiWarning.classList.remove('hidden');
+                    updateStatus("⚠️ Configura API Key", "#ed8936");
+                    return false;
+                }
+                apiWarning.classList.add('hidden');
+                updateStatus("✅ IA lista (Gemini)", "#2f855a");
+                return true;
+            }
+
+            // Configurar API key
+            configApiBtn?.addEventListener('click', () => {
+                const newKey = prompt('🔑 Ingresa tu API Key de Google Gemini:\n\n✅ GRATIS en https://aistudio.google.com/\n\nLa clave se guardará en tu navegador.', GEMINI_API_KEY);
+                if (newKey && newKey.trim()) {
+                    GEMINI_API_KEY = newKey.trim();
+                    localStorage.setItem('gemini_api_key', GEMINI_API_KEY);
+                    checkApiKey();
+                    updateStatus("✅ API Key guardada", "#2f855a");
+                    setTimeout(() => updateStatus("IA lista para analizar", "#2f855a"), 1500);
+                }
+            });
+
+            // Variables de dibujo
             let isDrawing = false;
             let lastX = 0, lastY = 0;
             let isCanvasExpanded = false;
@@ -542,22 +226,13 @@
                 const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 history.push(imageData);
                 currentHistoryIndex = history.length - 1;
-                if (history.length > 50) {
-                    history.shift();
-                    currentHistoryIndex--;
-                }
-            }
-
-            function restoreFromHistory(index) {
-                if (index >= 0 && index < history.length) {
-                    ctx.putImageData(history[index], 0, 0);
-                    currentHistoryIndex = index;
-                }
+                if (history.length > 50) history.shift();
             }
 
             function undo() {
                 if (currentHistoryIndex > 0) {
-                    restoreFromHistory(currentHistoryIndex - 1);
+                    ctx.putImageData(history[currentHistoryIndex - 1], 0, 0);
+                    currentHistoryIndex--;
                 } else if (currentHistoryIndex === 0) {
                     ctx.fillStyle = '#FFFFFF';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -575,18 +250,16 @@
 
             function downloadDrawing() {
                 const link = document.createElement('a');
-                link.download = `psychoart_dibujo_${Date.now()}.png`;
+                link.download = `psychoart_${Date.now()}.png`;
                 link.href = canvas.toDataURL();
                 link.click();
                 updateStatus("Dibujo guardado", "#2f855a");
-                setTimeout(() => updateStatus("Listo para dibujar", "#2f855a"), 1500);
             }
 
             function getCanvasCoords(e) {
                 const rect = canvas.getBoundingClientRect();
                 const scaleX = canvas.width / rect.width;
                 const scaleY = canvas.height / rect.height;
-                
                 let clientX, clientY;
                 if (e.touches) {
                     clientX = e.touches[0].clientX;
@@ -595,7 +268,6 @@
                     clientX = e.clientX;
                     clientY = e.clientY;
                 }
-                
                 let x = (clientX - rect.left) * scaleX;
                 let y = (clientY - rect.top) * scaleY;
                 x = Math.max(0, Math.min(canvas.width, x));
@@ -635,9 +307,8 @@
             }
 
             function resizeCanvas(width, height, preserveDrawing = true) {
-                if (canvas.width === width && canvas.height === height) return;
                 let oldImageData = null;
-                if (preserveDrawing) {
+                if (preserveDrawing && canvas.width > 0) {
                     oldImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 }
                 canvas.width = width;
@@ -656,25 +327,19 @@
                 isCanvasExpanded = !isCanvasExpanded;
                 if (isCanvasExpanded) {
                     resizeCanvas(window.innerWidth - 40, window.innerHeight - 200);
-                    updateStatus("Lienzo expandido", "#2f855a");
                 } else {
                     resizeCanvas(ORIGINAL_WIDTH, ORIGINAL_HEIGHT);
-                    updateStatus("Lienzo restaurado", "#2f855a");
                 }
+                updateStatus(isCanvasExpanded ? "Lienzo expandido" : "Lienzo restaurado", "#2f855a");
             }
 
-            function updateStatus(text, color, isError = false) {
+            function updateStatus(text, color) {
                 statusText.textContent = text;
                 statusDot.style.backgroundColor = color;
-                if (color === "#2f855a") {
-                    statusDot.className = 'connected';
-                } else if (color === "#e53e3e") {
-                    statusDot.className = 'error';
-                } else if (color === "#ed8936") {
-                    statusDot.className = 'warning';
-                } else {
-                    statusDot.className = '';
-                }
+                if (color === "#2f855a") statusDot.className = 'connected';
+                else if (color === "#e53e3e") statusDot.className = 'error';
+                else if (color === "#ed8936") statusDot.className = 'warning';
+                else statusDot.className = '';
             }
 
             function updateProgress(percentage, message) {
@@ -684,7 +349,142 @@
                 progressText.textContent = message;
             }
 
+            // Prompt profesional para Gemini
+            function buildAIPrompt() {
+                const candidateId = 'PSY-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+                const date = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
+                
+                return `Eres la Dra. Alva, psicóloga organizacional experta en tests proyectivos gráficos. Analiza PROFUNDAMENTE el dibujo adjunto y genera un informe psicológico profesional.
+
+INSTRUCCIONES DE ANÁLISIS:
+1. Analiza: tamaño del dibujo (autoestima), ubicación en el espacio (centro/arriba/abajo/izquierda/derecha), presión del trazo (intensidad/energía), continuidad de líneas (estabilidad), detalles originales (creatividad)
+2. Asigna porcentajes REALISTAS (0-100%) para los 4 rasgos principales basados en lo que OBSERVAS
+3. Escribe en español, tono profesional para RRHH
+4. El informe debe ser ÚNICO para cada dibujo, NO genérico
+
+GENERA ESTE HTML COMPLETO (reemplaza los textos con análisis REAL del dibujo):
+
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;background:#f0f2f5;padding:20px;}
+.container{max-width:900px;margin:0 auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.1);}
+.header{background:linear-gradient(135deg, #1a365d 0%, #2c5282 100%);color:white;padding:30px;text-align:center;}
+.header h1{font-size:1.8rem;margin-bottom:8px;}
+.card{margin:20px;padding:20px;border-radius:12px;background:#f7fafc;border:1px solid #e2e8f0;}
+.card h2{color:#1a365d;margin-bottom:15px;padding-bottom:8px;border-bottom:3px solid #4299e1;}
+.trait{margin-bottom:20px;}
+.trait-name{font-weight:700;margin-bottom:5px;color:#2d3748;font-size:1.1rem;}
+.progress-bar{background:#e2e8f0;border-radius:8px;overflow:hidden;height:24px;margin:8px 0;}
+.progress{background:linear-gradient(90deg, #4299e1 0%, #2f855a 100%);height:100%;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;color:white;font-size:12px;font-weight:600;}
+.analysis-list{padding-left:20px;margin:10px 0;}
+li{margin:8px 0;line-height:1.5;}
+.disclaimer{font-size:11px;color:#718096;text-align:center;padding:20px;border-top:1px solid #e2e8f0;}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header"><h1>📋 Informe de Análisis Proyectivo</h1><p>ID: ${candidateId} | Fecha: ${date}</p></div>
+  <div class="card"><h2>🧠 Perfil Psicológico</h2><p>[Escribe aquí un análisis personalizado basado en lo que ves en el dibujo - 3 líneas]</p></div>
+  <div class="card">
+    <h2>📊 Rasgos de Personalidad</h2>
+    <div class="trait"><div class="trait-name">⚡ Energía e Iniciativa</div><div class="progress-bar"><div class="progress" style="width: XX%;">XX%</div></div><p>[Interpretación específica de este dibujo]</p></div>
+    <div class="trait"><div class="trait-name">🧘 Estabilidad Emocional</div><div class="progress-bar"><div class="progress" style="width: YY%;">YY%</div></div><p>[Interpretación específica]</p></div>
+    <div class="trait"><div class="trait-name">🎨 Creatividad y Apertura</div><div class="progress-bar"><div class="progress" style="width: ZZ%;">ZZ%</div></div><p>[Interpretación específica]</p></div>
+    <div class="trait"><div class="trait-name">💪 Autoestima y Confianza</div><div class="progress-bar"><div class="progress" style="width: WW%;">WW%</div></div><p>[Interpretación específica]</p></div>
+  </div>
+  <div class="card"><h2>✅ Fortalezas</h2><ul class="analysis-list"><li>[Fortaleza 1 real del dibujo]</li><li>[Fortaleza 2]</li><li>[Fortaleza 3]</li></ul></div>
+  <div class="card"><h2>⚠️ Áreas de Desarrollo</h2><ul class="analysis-list"><li>[Área de mejora 1]</li><li>[Área de mejora 2]</li></ul></div>
+  <div class="card"><h2>🎯 Recomendaciones para RRHH</h2><p>[Recomendaciones estratégicas basadas en el perfil observado]</p></div>
+  <div class="disclaimer">⚠️ Análisis por IA - Complemento para selección de talento</div>
+</div>
+</body>
+</html>`;
+            }
+
+            // Llamada a Gemini AI REAL
+            async function analyzeWithGemini(base64Image) {
+                if (!GEMINI_API_KEY) {
+                    throw new Error("No hay API key configurada. Haz clic en el botón de configuración.");
+                }
+                
+                const prompt = buildAIPrompt();
+                
+                const requestBody = {
+                    contents: [{
+                        parts: [
+                            { text: prompt },
+                            { inlineData: { mimeType: "image/png", data: base64Image } }
+                        ]
+                    }],
+                    generationConfig: {
+                        temperature: 0.8,
+                        maxOutputTokens: 8192,
+                        topP: 0.95
+                    }
+                };
+
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 60000);
+                
+                try {
+                    const response = await fetch(getApiUrl(), {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(requestBody),
+                        signal: controller.signal
+                    });
+                    
+                    clearTimeout(timeoutId);
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        console.error("Gemini API Error:", errorData);
+                        if (response.status === 403 || response.status === 401) {
+                            throw new Error("API key inválida. Obtén una gratis en https://aistudio.google.com/");
+                        }
+                        if (response.status === 404) {
+                            throw new Error("Modelo no encontrado. Verifica tu conexión.");
+                        }
+                        throw new Error(errorData.error?.message || "Error en la API de Gemini");
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+                        throw new Error("Respuesta inválida de Gemini");
+                    }
+                    
+                    let resultText = data.candidates[0].content.parts[0].text;
+                    if (!resultText) throw new Error("Gemini no generó contenido");
+                    
+                    // Limpiar formato
+                    let cleanResult = resultText;
+                    cleanResult = cleanResult.replace(/```html\s*/gi, '');
+                    cleanResult = cleanResult.replace(/```\s*$/gm, '');
+                    cleanResult = cleanResult.replace(/```/g, '');
+                    
+                    if (!cleanResult.includes('<!DOCTYPE html>') && !cleanResult.includes('<html')) {
+                        cleanResult = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:sans-serif;padding:20px}</style></head><body><div style="max-width:800px;margin:auto"><h1>Informe de Análisis</h1><div>${cleanResult.replace(/\n/g, '<br>')}</div></div></body></html>`;
+                    }
+                    
+                    return cleanResult;
+                } catch (error) {
+                    clearTimeout(timeoutId);
+                    throw error;
+                }
+            }
+
             async function analyzeDrawing() {
+                // Verificar API key
+                if (!checkApiKey()) {
+                    alert("❌ Primero configura tu API key de Google Gemini.\n\n✅ GRATIS en https://aistudio.google.com/");
+                    return;
+                }
+                
+                // Verificar dibujo
                 const tempCanvas = document.createElement('canvas');
                 tempCanvas.width = canvas.width;
                 tempCanvas.height = canvas.height;
@@ -703,45 +503,47 @@
                 }
                 
                 if (!hasDrawing) {
-                    alert("❌ Por favor, realiza un dibujo antes de generar el informe.");
+                    alert("❌ Realiza un dibujo antes de generar el informe.");
                     return;
                 }
                 
                 progressModal.classList.remove('hidden');
                 analyzeBtn.disabled = true;
-                updateProgress(0, "Preparando imagen...");
+                updateProgress(10, "Preparando dibujo...");
                 
                 try {
-                    updateProgress(10, "Procesando dibujo...");
-                    await new Promise(r => setTimeout(r, 300));
+                    updateProgress(20, "Codificando imagen...");
+                    await new Promise(r => setTimeout(r, 200));
                     
                     const base64Image = tempCanvas.toDataURL('image/png').split(',')[1];
                     
-                    updateProgress(30, "Conectando con IA...");
+                    updateProgress(30, "Enviando a Gemini AI...");
+                    await new Promise(r => setTimeout(r, 300));
                     
-                    const prompt = getPromptForAI();
+                    updateProgress(50, "IA analizando trazos y composición...");
                     
-                    updateProgress(50, "Analizando trazos y composición...");
+                    const htmlReport = await analyzeWithGemini(base64Image);
                     
-                    const result = await callBackendAPI(prompt, base64Image);
+                    updateProgress(90, "Generando informe...");
+                    await new Promise(r => setTimeout(r, 300));
                     
-                    updateProgress(100, "¡Informe generado!");
-                    await new Promise(r => setTimeout(r, 500));
+                    updateProgress(100, "¡Informe completado!");
                     
-                    reportIframe.srcdoc = result;
+                    reportIframe.srcdoc = htmlReport;
                     reportModal.classList.remove('hidden');
-                    updateStatus("Análisis completado", "#2f855a");
+                    updateStatus("✅ Análisis por IA completado", "#2f855a");
                     
                 } catch (error) {
                     console.error("Error:", error);
-                    updateStatus("Error en el análisis", "#e53e3e", true);
-                    let errorMessage = error.message || "No se pudo generar el informe.";
-                    if (errorMessage.includes("fetch")) {
-                        errorMessage = "Error de conexión. Verifica tu internet.";
-                    } else if (errorMessage.includes("API")) {
-                        errorMessage = "El servicio de IA está ocupado. Intenta de nuevo.";
+                    updateStatus("Error en IA", "#e53e3e");
+                    let msg = error.message || "Error desconocido";
+                    if (msg.includes("API key")) {
+                        msg = "API key inválida. Configúrala en https://aistudio.google.com/";
+                        localStorage.removeItem('gemini_api_key');
+                        GEMINI_API_KEY = '';
+                        checkApiKey();
                     }
-                    alert(`❌ Error: ${errorMessage}`);
+                    alert(`❌ Error con la IA: ${msg}`);
                 } finally {
                     analyzeBtn.disabled = false;
                     progressModal.classList.add('hidden');
@@ -749,160 +551,29 @@
                 }
             }
 
-            function getPromptForAI() {
-                const candidateId = 'PSY-' + Math.random().toString(36).substring(2, 10).toUpperCase();
-                const date = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
-                
-                return `Eres la Dra. Alva, psicóloga organizacional experta en tests proyectivos. Analiza el dibujo adjunto y genera un informe profesional en formato HTML.
-
-INSTRUCCIONES IMPORTANTES:
-1. Analiza el dibujo basándote en: tamaño y ubicación (autoestima), presión del trazo (energía), continuidad (estabilidad emocional), detalles y originalidad (creatividad)
-2. Genera un informe COMPLETO en HTML con TODAS las secciones requeridas
-3. Asigna porcentajes realistas (0-100%) para cada rasgo basados en el análisis visual
-4. Escribe en español, tono profesional pero accesible para RRHH
-
-Aquí está el HTML que DEBES generar (reemplaza los textos entre [corchetes] con análisis real):
-
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;background:#f0f2f5;padding:20px;}
-  .container{max-width:900px;margin:0 auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.1);}
-  .header{background:linear-gradient(135deg, #1a365d 0%, #2c5282 100%);color:white;padding:30px;text-align:center;}
-  .header h1{font-size:1.8rem;margin-bottom:8px;}
-  .card{margin:20px;padding:20px;border-radius:12px;background:#f7fafc;border:1px solid #e2e8f0;}
-  .card h2{color:#1a365d;margin-bottom:15px;padding-bottom:8px;border-bottom:3px solid #4299e1;}
-  .trait{margin-bottom:20px;}
-  .trait-name{font-weight:700;margin-bottom:5px;color:#2d3748;font-size:1.1rem;}
-  .progress-bar{background:#e2e8f0;border-radius:8px;overflow:hidden;height:24px;margin:8px 0;}
-  .progress{background:linear-gradient(90deg, #4299e1 0%, #2f855a 100%);height:100%;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;color:white;font-size:12px;font-weight:600;}
-  .analysis-list{padding-left:20px;margin:10px 0;}
-  li{margin:8px 0;line-height:1.5;}
-  .disclaimer{font-size:11px;color:#718096;text-align:center;padding:20px;border-top:1px solid #e2e8f0;margin-top:20px;}
-</style>
-</head>
-<body>
-<div class="container">
-  <div class="header">
-    <h1>📋 Informe de Análisis Proyectivo</h1>
-    <p>ID: ${candidateId} | Fecha: ${date}</p>
-  </div>
-  <div class="card">
-    <h2>🧠 Perfil Psicológico Ejecutivo</h2>
-    <p>[Escribe un resumen ejecutivo de 3-4 líneas basado en el dibujo]</p>
-  </div>
-  <div class="card">
-    <h2>📊 Rasgos de Personalidad</h2>
-    <div class="trait"><div class="trait-name">⚡ Energía e Iniciativa</div><div class="progress-bar"><div class="progress" style="width: XX%;">XX%</div></div><p>[Interpretación basada en presión y tamaño del trazo]</p></div>
-    <div class="trait"><div class="trait-name">🧘 Estabilidad Emocional</div><div class="progress-bar"><div class="progress" style="width: YY%;">YY%</div></div><p>[Interpretación basada en continuidad y formas]</p></div>
-    <div class="trait"><div class="trait-name">🎨 Creatividad y Apertura</div><div class="progress-bar"><div class="progress" style="width: ZZ%;">ZZ%</div></div><p>[Interpretación basada en originalidad y detalles]</p></div>
-    <div class="trait"><div class="trait-name">💪 Autoestima y Confianza</div><div class="progress-bar"><div class="progress" style="width: WW%;">WW%</div></div><p>[Interpretación basada en ubicación y proporciones]</p></div>
-  </div>
-  <div class="card">
-    <h2>✅ Fortalezas Detectadas</h2>
-    <ul class="analysis-list"><li>[Fortaleza 1 basada en el dibujo]</li><li>[Fortaleza 2]</li><li>[Fortaleza 3]</li></ul>
-  </div>
-  <div class="card">
-    <h2>⚠️ Áreas de Desarrollo</h2>
-    <ul class="analysis-list"><li>[Área de mejora 1]</li><li>[Área de mejora 2]</li></ul>
-  </div>
-  <div class="card">
-    <h2>🎯 Recomendaciones para RRHH</h2>
-    <p>[Recomendaciones estratégicas basadas en el perfil]</p>
-  </div>
-  <div class="disclaimer">⚠️ Este informe es una herramienta complementaria dentro de un proceso de selección. No sustituye una evaluación psicológica completa.</div>
-</div>
-</body>
-</html>`;
-            }
-
-            async function callBackendAPI(prompt, base64Image) {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 45000); // 45 segundos timeout
-                
-                try {
-                    const response = await fetch('/api/analyze', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ image: base64Image, prompt: prompt }),
-                        signal: controller.signal
-                    });
-                    
-                    clearTimeout(timeoutId);
-                    
-                    if (!response.ok) {
-                        const errorData = await response.json().catch(() => ({}));
-                        throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
-                    }
-                    
-                    const data = await response.json();
-                    
-                    let resultText = null;
-                    if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-                        resultText = data.candidates[0].content;
-                    } else if (data.text) {
-                        resultText = data.text;
-                    } else if (data.result) {
-                        resultText = data.result;
-                    }
-                    
-                    if (resultText && typeof resultText === 'object' && resultText.parts) {
-                        resultText = resultText.parts[0].text;
-                    }
-                    
-                    if (!resultText || typeof resultText !== 'string') {
-                        throw new Error("La IA no devolvió un formato válido");
-                    }
-                    
-                    let cleanResult = resultText;
-                    cleanResult = cleanResult.replace(/```html\\s*/g, '');
-                    cleanResult = cleanResult.replace(/```\\s*$/g, '');
-                    cleanResult = cleanResult.replace(/```/g, '');
-                    
-                    if (!cleanResult.includes('<!DOCTYPE html>') && !cleanResult.includes('<html')) {
-                        cleanResult = `<html><body><div style="padding:20px"><h2>Informe de Análisis</h2><pre>${cleanResult}</pre></div></body></html>`;
-                    }
-                    
-                    return cleanResult;
-                } catch (error) {
-                    clearTimeout(timeoutId);
-                    if (error.name === 'AbortError') {
-                        throw new Error("La solicitud tomó demasiado tiempo. Intenta de nuevo.");
-                    }
-                    throw error;
-                }
-            }
-
             async function copyReport() {
                 try {
                     const iframeDoc = reportIframe.contentDocument || reportIframe.contentWindow.document;
-                    const textToCopy = iframeDoc.body.innerText;
-                    await navigator.clipboard.writeText(textToCopy);
-                    updateStatus("Informe copiado", "#2f855a");
-                    alert("✅ Informe copiado al portapapeles");
+                    const text = iframeDoc.body.innerText;
+                    await navigator.clipboard.writeText(text);
+                    alert("✅ Informe copiado");
                 } catch (err) {
-                    alert("❌ No se pudo copiar el informe");
+                    alert("❌ No se pudo copiar");
                 }
             }
 
             async function savePdf() {
                 try {
                     const element = reportIframe.contentDocument.querySelector('.container') || reportIframe.contentDocument.body;
-                    const opt = {
-                        margin: [10, 10, 10, 10],
-                        filename: `PsychoArt_Informe_${Date.now()}.pdf`,
+                    await html2pdf().set({
+                        margin: [10,10,10,10],
+                        filename: `PsychoArt_IA_${Date.now()}.pdf`,
                         image: { type: 'jpeg', quality: 0.98 },
-                        html2canvas: { scale: 2, useCORS: true, logging: false },
+                        html2canvas: { scale: 2 },
                         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                    };
-                    await html2pdf().set(opt).from(element).save();
+                    }).from(element).save();
                     updateStatus("PDF guardado", "#2f855a");
                 } catch (err) {
-                    console.error("PDF Error:", err);
                     alert("❌ Error al guardar PDF");
                 }
             }
@@ -922,18 +593,14 @@ Aquí está el HTML que DEBES generar (reemplaza los textos entre [corchetes] co
                 analyzeBtn.addEventListener('click', analyzeDrawing);
                 fullscreenBtn.addEventListener('click', () => {
                     const elem = document.querySelector('.container');
-                    if (!document.fullscreenElement) {
-                        elem.requestFullscreen();
-                    } else {
-                        document.exitFullscreen();
-                    }
+                    if (!document.fullscreenElement) elem.requestFullscreen();
+                    else document.exitFullscreen();
                 });
                 toggleCanvasSizeBtn.addEventListener('click', toggleCanvasSize);
                 
                 brushSizeSlider.addEventListener('input', (e) => {
-                    const val = e.target.value;
-                    ctx.lineWidth = parseInt(val);
-                    brushValue.textContent = val + 'px';
+                    ctx.lineWidth = parseInt(e.target.value);
+                    brushValue.textContent = e.target.value + 'px';
                 });
                 
                 closeModalBtn.addEventListener('click', () => reportModal.classList.add('hidden'));
@@ -943,9 +610,6 @@ Aquí está el HTML que DEBES generar (reemplaza los textos entre [corchetes] co
                 reportModal.addEventListener('click', (e) => {
                     if (e.target === reportModal) reportModal.classList.add('hidden');
                 });
-                progressModal.addEventListener('click', (e) => {
-                    if (e.target === progressModal) progressModal.classList.add('hidden');
-                });
             }
 
             function init() {
@@ -953,7 +617,7 @@ Aquí está el HTML que DEBES generar (reemplaza los textos entre [corchetes] co
                 initContext();
                 saveToHistory();
                 setupEventListeners();
-                updateStatus("✅ Listo para dibujar", "#2f855a");
+                checkApiKey();
                 brushValue.textContent = brushSizeSlider.value + 'px';
             }
             
