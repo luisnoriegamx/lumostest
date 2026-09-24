@@ -40,6 +40,18 @@
         .progress-bar { background: #e2e8f0; border-radius: 30px; height: 8px; overflow: hidden; margin: 20px 0; }
         .progress-fill { width: 0%; height: 100%; background: var(--success); transition: width 0.4s ease; }
         .hidden { display: none !important; }
+        .ai-panel { margin-top: 24px; background: linear-gradient(135deg,#eef6ff,#f8fafc); border: 1px solid #cbd5e1; border-radius: 24px; padding: 22px; }
+        .ai-panel h3 { margin: 0 0 6px; color: #0f172a; }
+        .ai-row { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+        .security-note { font-size:.78rem; color:#475569; margin:12px 0 0; }
+        .pill { display:inline-flex; align-items:center; gap:7px; padding:7px 12px; border-radius:999px; background:#dcfce7; color:#166534; font-size:.78rem; font-weight:700; }
+        .field { display:grid; gap:7px; margin-bottom:14px; }
+        .field label { font-size:.82rem; font-weight:700; color:#334155; }
+        .field input, .field select { width:100%; padding:12px 14px; border:1px solid #cbd5e1; border-radius:12px; font:inherit; background:#fff; }
+        .modal-card.config-card { max-width:520px; padding:0; }
+        .config-body { padding:24px; }
+        .key-box { display:flex; gap:8px; }
+        .key-box input { flex:1; }
         @media (max-width: 768px) { .content { padding: 20px; } .toolbar { flex-direction: column; align-items: stretch; border-radius: 24px; } .btn-group { justify-content: center; } }
     </style>
 </head>
@@ -81,8 +93,31 @@
         <button class="analyze-btn" id="analyzeBtn">
             🧠 Generar Informe Clínico (Análisis de Trazos)
         </button>
+        <section class="ai-panel" aria-label="Configuración de inteligencia artificial">
+            <div class="ai-row">
+                <div><h3>✨ Análisis asistido por IA</h3><div class="security-note">Puedes usar DeepSeek para enriquecer el dictamen. La API se cifra localmente en este dispositivo.</div></div>
+                <div><span class="pill" id="aiStatus">● Modo local</span> <button class="btn" id="openAiConfig">⚙ Configurar IA</button></div>
+            </div>
+            <button class="analyze-btn" id="aiAnalyzeBtn" style="margin-top:16px; background:linear-gradient(135deg,#2563eb,#0f172a);">🔎 Analizar y dictaminar con IA</button>
+            <p class="security-note">Aviso: el dibujo y el texto del análisis se enviarán al proveedor elegido solo al pulsar este botón. No es un diagnóstico médico.</p>
+        </section>
         <p style="font-size: 11px; text-align: center; color: #6c757d; margin-top: 16px;">Basado en criterios del Test Proyectivo de Karen Machover (Figura Humana)</p>
     </div>
+</div>
+
+<div id="aiConfigModal" class="modal hidden">
+  <div class="modal-card config-card">
+    <div class="modal-header"><h2>⚙ Configuración de IA</h2><button class="close-modal" id="closeAiConfig" style="background:none;border:0;font-size:28px;cursor:pointer">&times;</button></div>
+    <div class="config-body">
+      <div class="field"><label for="aiProvider">Proveedor</label><select id="aiProvider"><option value="deepseek">DeepSeek</option><option value="openai">OpenAI compatible</option></select></div>
+      <div class="field"><label for="aiEndpoint">Endpoint compatible</label><input id="aiEndpoint" value="https://api.deepseek.com/chat/completions" autocomplete="off"></div>
+      <div class="field"><label for="aiModel">Modelo</label><input id="aiModel" value="deepseek-chat" autocomplete="off"></div>
+      <div class="field"><label for="aiKey">API key</label><div class="key-box"><input id="aiKey" type="password" placeholder="sk-…" autocomplete="new-password"><button class="btn" id="toggleKey" type="button">Mostrar</button></div></div>
+      <div class="field"><label for="vaultPass">Contraseña de cifrado</label><input id="vaultPass" type="password" placeholder="Mínimo 8 caracteres" autocomplete="new-password"></div>
+      <p class="security-note">Se usa AES-GCM con PBKDF2. La contraseña no se guarda. Si la olvidas, tendrás que volver a introducir la API key.</p>
+      <div style="display:flex;justify-content:flex-end;gap:10px"><button class="btn" id="clearAiConfig">Borrar</button><button class="btn btn-primary" id="saveAiConfig">Cifrar y guardar</button></div>
+    </div>
+  </div>
 </div>
 
 <div id="progressModal" class="modal hidden">
@@ -113,6 +148,23 @@
 
 <script>
     (function() {
+        // ---------- Bóveda local cifrada (AES-GCM + PBKDF2) ----------
+        const VAULT_KEY = 'psychoart.ai.vault.v1';
+        const enc = new TextEncoder(); const dec = new TextDecoder();
+        const b64 = bytes => btoa(String.fromCharCode(...new Uint8Array(bytes)));
+        const fromB64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+        async function derive(pass, salt) { return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:150000,hash:'SHA-256'}, await crypto.subtle.importKey('raw',enc.encode(pass),'PBKDF2',false,['deriveKey']), {name:'AES-GCM',length:256}, false, ['encrypt','decrypt']); }
+        async function encryptVault(value, pass) { const salt=crypto.getRandomValues(new Uint8Array(16)), iv=crypto.getRandomValues(new Uint8Array(12)); const key=await derive(pass,salt); const data=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,enc.encode(JSON.stringify(value))); return JSON.stringify({salt:b64(salt),iv:b64(iv),data:b64(data)}); }
+        async function decryptVault(raw, pass) { const o=JSON.parse(raw), key=await derive(pass,fromB64(o.salt)); const data=await crypto.subtle.decrypt({name:'AES-GCM',iv:fromB64(o.iv)},key,fromB64(o.data)); return JSON.parse(dec.decode(data)); }
+        let aiConfig = null;
+        const aiStatus = document.getElementById('aiStatus');
+        const configModal = document.getElementById('aiConfigModal');
+        function refreshAiStatus(){ aiStatus.textContent = aiConfig ? '● DeepSeek configurado' : '● Modo local'; aiStatus.style.background=aiConfig?'#dbeafe':'#dcfce7'; aiStatus.style.color=aiConfig?'#1d4ed8':'#166534'; }
+        document.getElementById('openAiConfig').onclick=()=>configModal.classList.remove('hidden');
+        document.getElementById('closeAiConfig').onclick=()=>configModal.classList.add('hidden');
+        document.getElementById('toggleKey').onclick=()=>{const i=document.getElementById('aiKey'); i.type=i.type==='password'?'text':'password';};
+        document.getElementById('clearAiConfig').onclick=()=>{localStorage.removeItem(VAULT_KEY);aiConfig=null;refreshAiStatus();configModal.classList.add('hidden');};
+        document.getElementById('saveAiConfig').onclick=async()=>{const pass=document.getElementById('vaultPass').value,key=document.getElementById('aiKey').value.trim();if(pass.length<8||!key)return alert('Introduce una API key y una contraseña de al menos 8 caracteres.');const cfg={provider:document.getElementById('aiProvider').value,endpoint:document.getElementById('aiEndpoint').value.trim(),model:document.getElementById('aiModel').value.trim(),key};localStorage.setItem(VAULT_KEY,await encryptVault(cfg,pass));aiConfig=cfg;refreshAiStatus();configModal.classList.add('hidden');document.getElementById('vaultPass').value='';document.getElementById('aiKey').value='';alert('Configuración cifrada y guardada en este dispositivo.');};
         // ---------- Setup Canvas ----------
         const canvas = document.getElementById('drawingCanvas');
         const ctx = canvas.getContext('2d');
@@ -384,6 +436,12 @@
                 progressModal.classList.add('hidden');
                 reportModal.classList.remove('hidden');
             }, 500);
+        };
+        document.getElementById('aiAnalyzeBtn').onclick = async () => {
+            if(!aiConfig){ const raw=localStorage.getItem(VAULT_KEY); if(raw){const pass=prompt('Introduce la contraseña de cifrado para desbloquear la API:'); if(pass) try{aiConfig=await decryptVault(raw,pass);refreshAiStatus();}catch(e){return alert('No se pudo descifrar la configuración.');}} }
+            if(!aiConfig)return alert('Configura primero tu API de DeepSeek.');
+            const localReport=analyzeDrawing(); const promptText='Analiza de forma prudente este informe heurístico de una figura humana. Devuelve un dictamen claro, no diagnóstico, con limitaciones y recomendaciones de evaluación profesional:\n\n'+localReport.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').slice(0,12000);
+            try{const res=await fetch(aiConfig.endpoint,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+aiConfig.key},body:JSON.stringify({model:aiConfig.model,messages:[{role:'system',content:'Eres un asistente de apoyo para profesionales. No emitas diagnósticos ni conclusiones deterministas a partir de pruebas proyectivas.'},{role:'user',content:promptText}],temperature:.2})});if(!res.ok)throw new Error('HTTP '+res.status);const json=await res.json();const text=json.choices?.[0]?.message?.content||'La API no devolvió contenido.';reportIframe.srcdoc='<html><body style="font-family:Arial;padding:32px;line-height:1.6"><h1>Dictamen asistido por IA</h1><p style="color:#64748b">Resultado generado por '+aiConfig.provider+'; requiere revisión profesional.</p><div>'+text.replace(/\n/g,'<br>')+'</div></body></html>';reportModal.classList.remove('hidden');}catch(e){alert('No se pudo consultar la IA: '+e.message);}
         };
         
         closeModalBtn.onclick = () => reportModal.classList.add('hidden');
