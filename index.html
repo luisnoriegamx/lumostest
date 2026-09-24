@@ -222,15 +222,22 @@
         function draw(e) { if (!isDrawing) return; e.preventDefault(); const [x, y] = getCoords(e); ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(x, y); ctx.stroke(); lastX = x; lastY = y; }
         function endDraw() { if(isDrawing) { isDrawing = false; saveState(); } }
 
-        canvas.addEventListener('mousedown', startDraw);
-        canvas.addEventListener('mousemove', draw);
-        canvas.addEventListener('mouseup', endDraw);
-        canvas.addEventListener('mouseleave', endDraw);
-        canvas.addEventListener('touchstart', startDraw, {passive: false});
-        canvas.addEventListener('touchmove', draw, {passive: false});
-        canvas.addEventListener('touchend', endDraw);
+        // Pointer Events: funcionan con mouse, touch y stylus en desktop y móvil.
+        function pointerStart(e){ e.preventDefault(); if(e.pointerType==='mouse' && e.button!==0) return; isDrawing=true; canvas.setPointerCapture?.(e.pointerId); const [x,y]=getCoords(e); lastX=x; lastY=y; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+.5,y+.5); ctx.stroke(); }
+        function pointerDraw(e){ if(!isDrawing) return; e.preventDefault(); const [x,y]=getCoords(e); ctx.beginPath(); ctx.moveTo(lastX,lastY); ctx.lineTo(x,y); ctx.stroke(); lastX=x; lastY=y; }
+        function pointerEnd(e){ if(!isDrawing) return; e.preventDefault(); isDrawing=false; try{canvas.releasePointerCapture?.(e.pointerId);}catch(_){} saveState(); }
+        canvas.addEventListener('pointerdown', pointerStart, {passive:false});
+        canvas.addEventListener('pointermove', pointerDraw, {passive:false});
+        canvas.addEventListener('pointerup', pointerEnd, {passive:false});
+        canvas.addEventListener('pointercancel', pointerEnd, {passive:false});
+        canvas.addEventListener('pointerleave', e=>{ if(e.pointerType==='mouse') pointerEnd(e); }, {passive:false});
 
-        document.getElementById('brushSize').addEventListener('input', (e) => { ctx.lineWidth = parseInt(e.target.value); document.getElementById('brushValue').innerText = e.target.value + 'px'; });
+        const brushSize=document.getElementById('brushSize');
+        const brushValue=document.getElementById('brushValue');
+        function updateBrush(){ const value=Math.max(1,Math.min(20,Number(brushSize.value)||2)); ctx.lineWidth=value; brushValue.textContent=value+'px'; brushSize.setAttribute('aria-valuenow',value); }
+        brushSize.addEventListener('input', updateBrush);
+        brushSize.addEventListener('change', updateBrush);
+        updateBrush();
         document.getElementById('clearBtn').onclick = clearCanvas;
         document.getElementById('undoBtn').onclick = undo;
         document.getElementById('downloadBtn').onclick = () => { const link = document.createElement('a'); link.download = 'test_proyectivo.png'; link.href = canvas.toDataURL(); link.click(); };
@@ -445,7 +452,6 @@
             return s.replace(/\n/g,'<br>');
         }
         function buildAIReport(text){
-            const sections = escapeHTML(text).split(/\n\s*\n/).filter(Boolean).map((part,i)=>`<section class="ai-section"><div class="section-number">${String(i+1).padStart(2,'0')}</div><div><h3>${i===0?'Resumen del dictamen':'Análisis y recomendaciones'}</h3><p>${part.replace(/\n/g,'<br>')}</p></div></section>`).join('');
             const normalized=text.replace(/\r/g,'').trim();
             const rawSections=normalized.split(/(?=^\s*\d+[.)]\s+)/m).filter(Boolean);
             const sections=(rawSections.length?rawSections:[normalized]).map((part,i)=>{
@@ -456,7 +462,6 @@
             }).join('');
             const now = new Date().toLocaleString('es-MX',{dateStyle:'long',timeStyle:'short'});
             return `<!doctype html><html lang="es"><head><meta charset="UTF-8"><title>Dictamen PsychoArt</title><style>
-            *{box-sizing:border-box}body{margin:0;background:#eef2f7;color:#172033;font-family:Inter,Segoe UI,Arial,sans-serif;padding:30px}.paper{max-width:900px;margin:auto;background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 18px 45px rgba(15,23,42,.14)}.cover{padding:42px;background:linear-gradient(135deg,#0f172a,#1d4ed8);color:#fff}.eyebrow{text-transform:uppercase;letter-spacing:.14em;font-size:11px;opacity:.75;font-weight:700}.cover h1{font-size:32px;margin:12px 0 8px}.cover p{margin:0;opacity:.84}.meta{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}.meta span{background:rgba(255,255,255,.13);padding:9px 12px;border-radius:10px;font-size:12px}.content{padding:34px}.intro{background:#f1f5ff;border-left:4px solid #2563eb;padding:16px 18px;border-radius:12px;margin-bottom:22px;color:#334155}.ai-section{display:grid;grid-template-columns:44px 1fr;gap:16px;border:1px solid #e2e8f0;border-radius:16px;padding:18px;margin:14px 0;page-break-inside:avoid}.section-number{width:36px;height:36px;border-radius:10px;background:#dbeafe;color:#1d4ed8;display:grid;place-items:center;font-weight:800;font-size:12px}.ai-section h3{margin:0 0 8px;font-size:16px}.ai-section p{margin:0;line-height:1.7;color:#475569;font-size:14px}.diagnosis{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;border-radius:14px;padding:16px;font-size:13px;line-height:1.6;margin:18px 0}.disclaimer{margin-top:24px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:14px;padding:16px;font-size:12px;line-height:1.6}footer{text-align:center;padding:20px;border-top:1px solid #e2e8f0;color:#64748b;font-size:11px}@media print{body{padding:0;background:#fff}.paper{box-shadow:none}}
             *{box-sizing:border-box}body{margin:0;background:#eef2f7;color:#172033;font-family:Inter,Segoe UI,Arial,sans-serif;padding:30px}.paper{width:100%;max-width:900px;margin:auto;background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 18px 45px rgba(15,23,42,.14)}.cover{padding:42px;background:linear-gradient(135deg,#0f172a,#1d4ed8);color:#fff}.eyebrow{text-transform:uppercase;letter-spacing:.14em;font-size:11px;opacity:.75;font-weight:700}.cover h1{font-size:32px;margin:12px 0 8px}.cover p{margin:0;opacity:.84}.meta{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}.meta span{background:rgba(255,255,255,.13);padding:9px 12px;border-radius:10px;font-size:12px}.content{padding:34px}.intro{background:#f1f5ff;border-left:4px solid #2563eb;padding:16px 18px;border-radius:12px;margin-bottom:22px;color:#334155}.ai-section{display:grid;grid-template-columns:44px minmax(0,1fr);gap:16px;border:1px solid #e2e8f0;border-radius:16px;padding:18px;margin:14px 0;page-break-inside:avoid}.section-number{width:36px;height:36px;border-radius:10px;background:#dbeafe;color:#1d4ed8;display:grid;place-items:center;font-weight:800;font-size:12px}.ai-section h3{margin:0 0 8px;font-size:16px}.ai-copy{margin:0;line-height:1.7;color:#475569;font-size:14px;overflow-wrap:anywhere}.ai-copy ul{padding-left:20px;margin:8px 0}.ai-copy li{margin:4px 0}.diagnosis{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;border-radius:14px;padding:16px;font-size:13px;line-height:1.6;margin:18px 0}.disclaimer{margin-top:24px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:14px;padding:16px;font-size:12px;line-height:1.6}footer{text-align:center;padding:20px;border-top:1px solid #e2e8f0;color:#64748b;font-size:11px}@media(max-width:600px){body{padding:12px}.cover{padding:28px 22px}.cover h1{font-size:27px}.content{padding:20px}.ai-section{grid-template-columns:36px minmax(0,1fr);gap:10px;padding:14px}.section-number{width:32px;height:32px}.ai-section h3{font-size:15px}.ai-copy{font-size:13px}}@media print{body{padding:0;background:#fff}.paper{box-shadow:none}}
             </style></head><body><article class="paper"><header class="cover"><div class="eyebrow">PsychoArt Pro · Informe asistido</div><h1>Dictamen de análisis proyectivo</h1><p>Interpretación complementaria generada con apoyo de inteligencia artificial</p><div class="meta"><span>Fecha: ${escapeHTML(now)}</span><span>Proveedor: ${escapeHTML(aiConfig.provider)}</span><span>Modelo: ${escapeHTML(aiConfig.model)}</span></div></header><main class="content"><div class="intro"><strong>Lectura ejecutiva</strong><br>Este documento organiza los hallazgos y presenta una impresión diagnóstica orientativa para revisión del profesional.</div>${sections}<div class="diagnosis"><strong>Impresión diagnóstica orientativa:</strong><br>Debe formularse como hipótesis clínica, con nivel de confianza y evidencia observada. No equivale a un diagnóstico definitivo.</div><div class="disclaimer"><strong>Importante:</strong> el dictamen puede contener hipótesis diagnósticas orientativas, pero no sustituye la evaluación clínica integral ni toma decisiones laborales, periciales o terapéuticas por sí mismo.</div></main><footer>PsychoArt Pro · Documento generado para revisión profesional</footer></article></body></html>`;
         }
